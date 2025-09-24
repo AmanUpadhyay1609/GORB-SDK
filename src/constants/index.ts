@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import { BlockchainConfig, GorbchainConfig, SolanaConfig } from "./types";
+import { BlockchainConfig, GorbchainConfig, SolanaConfig } from "../types";
 
 // Gorbchain program IDs
 export const GORBCHAIN_PROGRAMS = {

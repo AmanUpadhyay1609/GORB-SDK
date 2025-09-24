@@ -11,7 +11,7 @@ import {
   GORB,
   Keypair,
   PublicKey,
-} from "./index";
+} from "../core";
 
 // Test 1: SDK Creation
 console.log("🧪 Testing SDK Creation...");

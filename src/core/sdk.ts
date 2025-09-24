@@ -12,29 +12,29 @@ import {
   Wallet,
   SDKConfig,
   SDKError,
-} from "./types";
+} from "../types";
 import {
   GORBCHAIN_CONFIG,
   SOLANA_MAINNET_CONFIG,
   SOLANA_DEVNET_CONFIG,
-} from "./constants";
+} from "../constants";
 import {
   createTokenTransaction,
   createNFTTransaction,
-} from "./transaction-builders";
+} from "../builders";
 import {
   signWithKeypair,
   signWithWalletAdapter,
   signWithWalletAndKeypair,
   validateWallet,
   validateKeypair,
-} from "./signing";
+} from "../signing";
 import {
   submitTransaction,
   simulateTransaction,
   waitForConfirmation,
   getTransactionDetails,
-} from "./submission";
+} from "../submission";
 
 /**
  * Main SDK class for Solana-based blockchain operations

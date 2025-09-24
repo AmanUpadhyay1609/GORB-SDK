@@ -21,7 +21,7 @@ import {
   TransactionResult,
   BlockchainConfig,
   SDKError,
-} from "./types";
+} from "../types";
 
 // Helper function to calculate metadata space
 function calculateMetadataSpace(name: string, symbol: string, uri: string): number {

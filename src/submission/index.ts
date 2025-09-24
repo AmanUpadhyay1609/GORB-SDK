@@ -7,7 +7,7 @@ import {
   SubmitOptions,
   SubmitResult,
   TransactionError,
-} from "./types";
+} from "../types";
 
 /**
  * Submits a signed transaction to the network

@@ -8,7 +8,7 @@ import {
   SignWithWalletAdapter,
   Wallet,
   SigningError,
-} from "./types";
+} from "../types";
 
 /**
  * Signs a transaction with a keypair

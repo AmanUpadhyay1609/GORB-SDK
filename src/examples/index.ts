@@ -11,7 +11,7 @@ import {
   Keypair,
   PublicKey,
   GORB,
-} from "./index";
+} from "../core";
 import bs58 from "bs58";
 
 // Example 1: Using Gorbchain SDK
