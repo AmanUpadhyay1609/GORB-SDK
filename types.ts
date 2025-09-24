@@ -1,0 +1,109 @@
+import { PublicKey, Keypair, Transaction, Connection } from "@solana/web3.js";
+
+// Base configuration for any Solana-based blockchain
+export interface BlockchainConfig {
+  name?: string;
+  tokenProgram: PublicKey;
+  associatedTokenProgram: PublicKey;
+  systemProgram: PublicKey;
+  rpcUrl: string;
+  wsUrl?: string;
+  commitment?: "processed" | "confirmed" | "finalized";
+}
+
+// Gorbchain specific configuration
+export interface GorbchainConfig extends BlockchainConfig {
+  name: "gorbchain";
+  version: string;
+}
+
+// Solana mainnet configuration
+export interface SolanaConfig extends BlockchainConfig {
+  name: "solana";
+  cluster: "mainnet-beta" | "devnet" | "testnet";
+}
+
+// Generic blockchain configuration
+export type AnyBlockchainConfig = GorbchainConfig | SolanaConfig | BlockchainConfig;
+
+// Token creation parameters
+export interface CreateTokenParams {
+  name: string;
+  symbol: string;
+  supply: string | number;
+  decimals: string | number;
+  uri: string;
+  freezeAuthority?: PublicKey | null;
+  mintKeypair?: Keypair; // Optional, will generate if not provided
+}
+
+// NFT creation parameters
+export interface CreateNFTParams {
+  name: string;
+  symbol: string;
+  uri: string;
+  description: string;
+  mintKeypair?: Keypair; // Optional, will generate if not provided
+}
+
+// Transaction building result
+export interface TransactionResult {
+  transaction: Transaction;
+  mintKeypair: Keypair;
+  mintAddress: PublicKey;
+  associatedTokenAddress?: PublicKey;
+  instructions: any[];
+}
+
+// Signing function types
+export type SignWithKeypair = (transaction: Transaction, keypair: Keypair) => Promise<Transaction>;
+export type SignWithWalletAdapter = (transaction: Transaction, wallet: any) => Promise<Transaction>;
+
+// Wallet interface for compatibility
+export interface Wallet {
+  publicKey: PublicKey;
+  signTransaction: (transaction: Transaction) => Promise<Transaction>;
+  signAllTransactions?: (transactions: Transaction[]) => Promise<Transaction[]>;
+}
+
+// Transaction submission options
+export interface SubmitOptions {
+  skipPreflight?: boolean;
+  maxRetries?: number;
+  commitment?: "processed" | "confirmed" | "finalized";
+}
+
+// Transaction submission result
+export interface SubmitResult {
+  signature: string;
+  success: boolean;
+  error?: any;
+}
+
+// SDK configuration
+export interface SDKConfig {
+  blockchain: AnyBlockchainConfig;
+  connection?: Connection;
+}
+
+// Error types
+export class SDKError extends Error {
+  constructor(message: string, public code?: string) {
+    super(message);
+    this.name = "SDKError";
+  }
+}
+
+export class TransactionError extends SDKError {
+  constructor(message: string, public signature?: string) {
+    super(message, "TRANSACTION_ERROR");
+    this.name = "TransactionError";
+  }
+}
+
+export class SigningError extends SDKError {
+  constructor(message: string) {
+    super(message, "SIGNING_ERROR");
+    this.name = "SigningError";
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@gorbchain/solana-sdk",
+  "version": "1.0.0",
+  "description": "A modular SDK for Solana-based blockchain operations, supporting Gorbchain and other Solana forks",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "solana",
+    "blockchain",
+    "sdk",
+    "gorbchain",
+    "token",
+    "nft",
+    "cryptocurrency",
+    "web3"
+  ],
+  "author": "GORB Chain Team",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/spl-token": "^0.3.9",
+    "@solana/web3.js": "^1.87.6",
+    "bs58": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@solana/spl-token": "^0.3.0",
+    "@solana/web3.js": "^1.87.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gorbchain/solana-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gorbchain/solana-sdk/issues"
+  },
+  "homepage": "https://github.com/gorbchain/solana-sdk#readme"
+}
