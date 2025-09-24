@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signWithWalletAdapter = exports.signWithKeypair = void 0;
+exports.signTransferWithWalletAndKeypair = exports.signWithDualKeypairs = exports.signWithWalletAdapter = exports.signWithKeypair = void 0;
 exports.signAllWithWalletAdapter = signAllWithWalletAdapter;
 exports.signWithWalletAndKeypair = signWithWalletAndKeypair;
 exports.createCombinedSigner = createCombinedSigner;
 exports.validateWallet = validateWallet;
 exports.validateKeypair = validateKeypair;
+exports.createTransferSigner = createTransferSigner;
+exports.createTransferWalletSigner = createTransferWalletSigner;
 const web3_js_1 = require("@solana/web3.js");
 const types_1 = require("../types");
 /**
@@ -113,5 +115,83 @@ function validateKeypair(keypair) {
         keypair.publicKey instanceof web3_js_1.PublicKey &&
         keypair.secretKey instanceof Uint8Array &&
         keypair.secretKey.length === 64);
+}
+/**
+ * Signs a transaction with dual keypairs (sender and optional fee payer)
+ * @param transaction - Transaction to sign
+ * @param senderKeypair - Sender keypair (always required)
+ * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
+ * @returns Signed transaction
+ */
+const signWithDualKeypairs = async (transaction, senderKeypair, feePayerKeypair) => {
+    try {
+        if (!validateKeypair(senderKeypair)) {
+            throw new types_1.SigningError("Invalid sender keypair provided");
+        }
+        // Always sign with sender keypair
+        transaction.partialSign(senderKeypair);
+        // If fee payer is different from sender, sign with fee payer keypair too
+        if (feePayerKeypair && validateKeypair(feePayerKeypair)) {
+            // Check if fee payer is different from sender
+            if (!feePayerKeypair.publicKey.equals(senderKeypair.publicKey)) {
+                transaction.partialSign(feePayerKeypair);
+            }
+        }
+        return transaction;
+    }
+    catch (error) {
+        throw new types_1.SigningError(`Failed to sign transaction with dual keypairs: ${error.message}`);
+    }
+};
+exports.signWithDualKeypairs = signWithDualKeypairs;
+/**
+ * Signs a transaction with wallet and optional fee payer keypair
+ * @param transaction - Transaction to sign
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Signed transaction
+ */
+const signTransferWithWalletAndKeypair = async (transaction, wallet, feePayerKeypair) => {
+    try {
+        if (!validateWallet(wallet)) {
+            throw new types_1.SigningError("Invalid wallet provided");
+        }
+        // First sign with wallet
+        const walletSignedTx = await (0, exports.signWithWalletAdapter)(transaction, wallet);
+        // If fee payer keypair is provided and different from wallet, sign with it too
+        if (feePayerKeypair && validateKeypair(feePayerKeypair)) {
+            // Check if fee payer is different from wallet
+            if (!feePayerKeypair.publicKey.equals(wallet.publicKey)) {
+                walletSignedTx.partialSign(feePayerKeypair);
+            }
+        }
+        return walletSignedTx;
+    }
+    catch (error) {
+        throw new types_1.SigningError(`Failed to sign transaction with wallet and keypair: ${error.message}`);
+    }
+};
+exports.signTransferWithWalletAndKeypair = signTransferWithWalletAndKeypair;
+/**
+ * Creates a signing function for native transfers that handles dual signers
+ * @param senderKeypair - Sender keypair
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+function createTransferSigner(senderKeypair, feePayerKeypair) {
+    return async (transaction) => {
+        return (0, exports.signWithDualKeypairs)(transaction, senderKeypair, feePayerKeypair);
+    };
+}
+/**
+ * Creates a signing function for native transfers with wallet and fee payer
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+function createTransferWalletSigner(wallet, feePayerKeypair) {
+    return async (transaction) => {
+        return (0, exports.signTransferWithWalletAndKeypair)(transaction, wallet, feePayerKeypair);
+    };
 }
 //# sourceMappingURL=index.js.map

@@ -9,6 +9,8 @@ import {
   CreateTokenParams,
   CreateNFTParams,
   TransactionResult,
+  TransferSOLParams,
+  TransferTransactionResult,
   Wallet,
   SDKConfig,
   SDKError,
@@ -21,11 +23,14 @@ import {
 import {
   createTokenTransaction,
   createNFTTransaction,
+  createNativeTransferTransaction,
 } from "../builders";
 import {
   signWithKeypair,
   signWithWalletAdapter,
   signWithWalletAndKeypair,
+  signWithDualKeypairs,
+  signTransferWithWalletAndKeypair,
   validateWallet,
   validateKeypair,
 } from "../signing";
@@ -75,6 +80,15 @@ export class SolanaSDK {
   }
 
   /**
+   * Creates a native SOL transfer transaction
+   * @param params - Transfer parameters
+   * @returns Transfer transaction result
+   */
+  async createNativeTransferTransaction(params: TransferSOLParams): Promise<TransferTransactionResult> {
+    return createNativeTransferTransaction(this.connection, this.config, params);
+  }
+
+  /**
    * Signs a transaction with a keypair
    * @param transaction - Transaction to sign
    * @param keypair - Keypair to sign with
@@ -119,6 +133,48 @@ export class SolanaSDK {
       throw new SDKError("Invalid keypair provided");
     }
     return signWithWalletAndKeypair(transaction, wallet, mintKeypair);
+  }
+
+  /**
+   * Signs a transaction with dual keypairs (for native transfers)
+   * @param transaction - Transaction to sign
+   * @param senderKeypair - Sender keypair (always required)
+   * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
+   * @returns Signed transaction
+   */
+  async signWithDualKeypairs(
+    transaction: Transaction,
+    senderKeypair: Keypair,
+    feePayerKeypair?: Keypair
+  ): Promise<Transaction> {
+    if (!validateKeypair(senderKeypair)) {
+      throw new SDKError("Invalid sender keypair provided");
+    }
+    if (feePayerKeypair && !validateKeypair(feePayerKeypair)) {
+      throw new SDKError("Invalid fee payer keypair provided");
+    }
+    return signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair);
+  }
+
+  /**
+   * Signs a transaction with wallet and optional fee payer keypair (for native transfers)
+   * @param transaction - Transaction to sign
+   * @param wallet - Wallet adapter instance
+   * @param feePayerKeypair - Fee payer keypair (optional)
+   * @returns Signed transaction
+   */
+  async signTransferWithWalletAndKeypair(
+    transaction: Transaction,
+    wallet: Wallet,
+    feePayerKeypair?: Keypair
+  ): Promise<Transaction> {
+    if (!validateWallet(wallet)) {
+      throw new SDKError("Invalid wallet provided");
+    }
+    if (feePayerKeypair && !validateKeypair(feePayerKeypair)) {
+      throw new SDKError("Invalid fee payer keypair provided");
+    }
+    return signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair);
   }
 
   /**

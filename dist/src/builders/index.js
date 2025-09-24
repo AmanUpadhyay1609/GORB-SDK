@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createTokenTransaction = createTokenTransaction;
 exports.createNFTTransaction = createNFTTransaction;
+exports.createNativeTransferTransaction = createNativeTransferTransaction;
 const web3_js_1 = require("@solana/web3.js");
 const spl_token_1 = require("@solana/spl-token");
 const types_1 = require("../types");
@@ -182,6 +183,52 @@ async function createNFTTransaction(connection, config, params, payer) {
     }
     catch (error) {
         throw new types_1.SDKError(`Failed to create NFT transaction: ${error.message}`);
+    }
+}
+/**
+ * Creates a native SOL transfer transaction
+ * @param connection - Solana connection
+ * @param config - Blockchain configuration
+ * @param params - Transfer parameters
+ * @returns Transfer transaction result
+ */
+async function createNativeTransferTransaction(connection, _config, params) {
+    try {
+        const { fromPublicKey, toPublicKey, amountInSOL, feePayerPublicKey, } = params;
+        // Validate amount
+        if (amountInSOL <= 0) {
+            throw new types_1.SDKError("Invalid SOL amount. Amount must be greater than 0");
+        }
+        // Convert SOL to lamports
+        const LAMPORTS_PER_SOL = 1000000000;
+        const amountInLamports = Math.floor(amountInSOL * LAMPORTS_PER_SOL);
+        // Determine fee payer (defaults to sender if not provided)
+        const actualFeePayer = feePayerPublicKey || fromPublicKey;
+        // Get recent blockhash
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        // Create transfer instruction
+        const transferInstruction = web3_js_1.SystemProgram.transfer({
+            fromPubkey: fromPublicKey,
+            toPubkey: toPublicKey,
+            lamports: amountInLamports,
+        });
+        // Create transaction
+        const transaction = new web3_js_1.Transaction({
+            feePayer: actualFeePayer,
+            blockhash,
+            lastValidBlockHeight,
+        }).add(transferInstruction);
+        return {
+            transaction,
+            fromPublicKey,
+            toPublicKey,
+            amountInLamports,
+            feePayerPublicKey: actualFeePayer,
+            instructions: transaction.instructions,
+        };
+    }
+    catch (error) {
+        throw new types_1.SDKError(`Failed to create native transfer transaction: ${error.message}`);
     }
 }
 //# sourceMappingURL=index.js.map

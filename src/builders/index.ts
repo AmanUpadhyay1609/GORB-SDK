@@ -21,6 +21,8 @@ import {
   TransactionResult,
   BlockchainConfig,
   SDKError,
+  TransferSOLParams,
+  TransferTransactionResult,
 } from "../types";
 
 // Helper function to calculate metadata space
@@ -345,6 +347,68 @@ export async function createNFTTransaction(
     };
   } catch (error: any) {
     throw new SDKError(`Failed to create NFT transaction: ${error.message}`);
+  }
+}
+
+/**
+ * Creates a native SOL transfer transaction
+ * @param connection - Solana connection
+ * @param config - Blockchain configuration
+ * @param params - Transfer parameters
+ * @returns Transfer transaction result
+ */
+export async function createNativeTransferTransaction(
+  connection: Connection,
+  _config: BlockchainConfig,
+  params: TransferSOLParams
+): Promise<TransferTransactionResult> {
+  try {
+    const {
+      fromPublicKey,
+      toPublicKey,
+      amountInSOL,
+      feePayerPublicKey,
+    } = params;
+
+    // Validate amount
+    if (amountInSOL <= 0) {
+      throw new SDKError("Invalid SOL amount. Amount must be greater than 0");
+    }
+
+    // Convert SOL to lamports
+    const LAMPORTS_PER_SOL = 1_000_000_000;
+    const amountInLamports = Math.floor(amountInSOL * LAMPORTS_PER_SOL);
+
+    // Determine fee payer (defaults to sender if not provided)
+    const actualFeePayer = feePayerPublicKey || fromPublicKey;
+
+    // Get recent blockhash
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+
+    // Create transfer instruction
+    const transferInstruction = SystemProgram.transfer({
+      fromPubkey: fromPublicKey,
+      toPubkey: toPublicKey,
+      lamports: amountInLamports,
+    });
+
+    // Create transaction
+    const transaction = new Transaction({
+      feePayer: actualFeePayer,
+      blockhash,
+      lastValidBlockHeight,
+    }).add(transferInstruction);
+
+    return {
+      transaction,
+      fromPublicKey,
+      toPublicKey,
+      amountInLamports,
+      feePayerPublicKey: actualFeePayer,
+      instructions: transaction.instructions,
+    };
+  } catch (error: any) {
+    throw new SDKError(`Failed to create native transfer transaction: ${error.message}`);
   }
 }
 

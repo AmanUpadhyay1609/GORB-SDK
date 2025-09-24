@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { BlockchainConfig, CreateTokenParams, CreateNFTParams, TransactionResult, Wallet, SDKConfig } from "../types";
+import { BlockchainConfig, CreateTokenParams, CreateNFTParams, TransactionResult, TransferSOLParams, TransferTransactionResult, Wallet, SDKConfig } from "../types";
 /**
  * Main SDK class for Solana-based blockchain operations
  */
@@ -22,6 +22,12 @@ export declare class SolanaSDK {
      */
     createNFTTransaction(params: CreateNFTParams, payer: PublicKey): Promise<TransactionResult>;
     /**
+     * Creates a native SOL transfer transaction
+     * @param params - Transfer parameters
+     * @returns Transfer transaction result
+     */
+    createNativeTransferTransaction(params: TransferSOLParams): Promise<TransferTransactionResult>;
+    /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign
      * @param keypair - Keypair to sign with
@@ -43,6 +49,22 @@ export declare class SolanaSDK {
      * @returns Signed transaction
      */
     signWithWalletAndKeypair(transaction: Transaction, wallet: Wallet, mintKeypair: Keypair): Promise<Transaction>;
+    /**
+     * Signs a transaction with dual keypairs (for native transfers)
+     * @param transaction - Transaction to sign
+     * @param senderKeypair - Sender keypair (always required)
+     * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
+     * @returns Signed transaction
+     */
+    signWithDualKeypairs(transaction: Transaction, senderKeypair: Keypair, feePayerKeypair?: Keypair): Promise<Transaction>;
+    /**
+     * Signs a transaction with wallet and optional fee payer keypair (for native transfers)
+     * @param transaction - Transaction to sign
+     * @param wallet - Wallet adapter instance
+     * @param feePayerKeypair - Fee payer keypair (optional)
+     * @returns Signed transaction
+     */
+    signTransferWithWalletAndKeypair(transaction: Transaction, wallet: Wallet, feePayerKeypair?: Keypair): Promise<Transaction>;
     /**
      * Submits a signed transaction
      * @param transaction - Signed transaction

@@ -1,4 +1,4 @@
-import { PublicKey, Keypair, Transaction, Connection } from "@solana/web3.js";
+import { PublicKey, Keypair, Transaction, Connection, TransactionSignature } from "@solana/web3.js";
 export interface BlockchainConfig {
     name?: string;
     tokenProgram: PublicKey;
@@ -40,8 +40,30 @@ export interface TransactionResult {
     associatedTokenAddress?: PublicKey;
     instructions: any[];
 }
+export interface TransferSOLParams {
+    fromPublicKey: PublicKey;
+    toPublicKey: PublicKey;
+    amountInSOL: number;
+    feePayerPublicKey?: PublicKey;
+}
+export interface TransferTransactionResult {
+    transaction: Transaction;
+    fromPublicKey: PublicKey;
+    toPublicKey: PublicKey;
+    amountInLamports: number;
+    feePayerPublicKey: PublicKey;
+    instructions: any[];
+}
+export interface TransferResult {
+    success: boolean;
+    signature?: TransactionSignature;
+    explorerUrl?: string;
+    error?: string;
+}
 export type SignWithKeypair = (transaction: Transaction, keypair: Keypair) => Promise<Transaction>;
 export type SignWithWalletAdapter = (transaction: Transaction, wallet: any) => Promise<Transaction>;
+export type SignWithDualKeypairs = (transaction: Transaction, senderKeypair: Keypair, feePayerKeypair?: Keypair) => Promise<Transaction>;
+export type SignWithWalletAndKeypair = (transaction: Transaction, wallet: Wallet, feePayerKeypair?: Keypair) => Promise<Transaction>;
 export interface Wallet {
     publicKey: PublicKey;
     signTransaction: (transaction: Transaction) => Promise<Transaction>;

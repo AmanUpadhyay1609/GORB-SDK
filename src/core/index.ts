@@ -10,12 +10,17 @@ export type {
   CreateTokenParams,
   CreateNFTParams,
   TransactionResult,
+  TransferSOLParams,
+  TransferTransactionResult,
+  TransferResult,
   Wallet,
   SDKConfig,
   SubmitOptions,
   SubmitResult,
   SignWithKeypair,
   SignWithWalletAdapter,
+  SignWithDualKeypairs,
+  SignWithWalletAndKeypair,
 } from "../types";
 
 // Error exports
@@ -37,6 +42,7 @@ export {
 export {
   createTokenTransaction,
   createNFTTransaction,
+  createNativeTransferTransaction,
 } from "../builders";
 
 // Signing utility exports
@@ -48,6 +54,10 @@ export {
   createCombinedSigner,
   validateWallet,
   validateKeypair,
+  signWithDualKeypairs,
+  signTransferWithWalletAndKeypair,
+  createTransferSigner,
+  createTransferWalletSigner,
 } from "../signing";
 
 // Submission utility exports

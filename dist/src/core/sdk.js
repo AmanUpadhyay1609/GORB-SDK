@@ -40,6 +40,14 @@ class SolanaSDK {
         return (0, builders_1.createNFTTransaction)(this.connection, this.config, params, payer);
     }
     /**
+     * Creates a native SOL transfer transaction
+     * @param params - Transfer parameters
+     * @returns Transfer transaction result
+     */
+    async createNativeTransferTransaction(params) {
+        return (0, builders_1.createNativeTransferTransaction)(this.connection, this.config, params);
+    }
+    /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign
      * @param keypair - Keypair to sign with
@@ -78,6 +86,38 @@ class SolanaSDK {
             throw new types_1.SDKError("Invalid keypair provided");
         }
         return (0, signing_1.signWithWalletAndKeypair)(transaction, wallet, mintKeypair);
+    }
+    /**
+     * Signs a transaction with dual keypairs (for native transfers)
+     * @param transaction - Transaction to sign
+     * @param senderKeypair - Sender keypair (always required)
+     * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
+     * @returns Signed transaction
+     */
+    async signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair) {
+        if (!(0, signing_1.validateKeypair)(senderKeypair)) {
+            throw new types_1.SDKError("Invalid sender keypair provided");
+        }
+        if (feePayerKeypair && !(0, signing_1.validateKeypair)(feePayerKeypair)) {
+            throw new types_1.SDKError("Invalid fee payer keypair provided");
+        }
+        return (0, signing_1.signWithDualKeypairs)(transaction, senderKeypair, feePayerKeypair);
+    }
+    /**
+     * Signs a transaction with wallet and optional fee payer keypair (for native transfers)
+     * @param transaction - Transaction to sign
+     * @param wallet - Wallet adapter instance
+     * @param feePayerKeypair - Fee payer keypair (optional)
+     * @returns Signed transaction
+     */
+    async signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair) {
+        if (!(0, signing_1.validateWallet)(wallet)) {
+            throw new types_1.SDKError("Invalid wallet provided");
+        }
+        if (feePayerKeypair && !(0, signing_1.validateKeypair)(feePayerKeypair)) {
+            throw new types_1.SDKError("Invalid fee payer keypair provided");
+        }
+        return (0, signing_1.signTransferWithWalletAndKeypair)(transaction, wallet, feePayerKeypair);
     }
     /**
      * Submits a signed transaction

@@ -263,6 +263,221 @@ export function demonstrateGORBObject() {
 }
 
 
+// Example 8: Native SOL Transfer with single signer (sender pays fees)
+export async function transferSOLSingleSigner() {
+  const sdk = createGorbchainSDK();
+
+  // Transfer parameters
+  const transferParams = {
+    fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"), // Sender
+    toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"), // Recipient
+    amountInSOL: 0.1, // 0.1 SOL
+    // feePayerPublicKey not provided, so sender will pay fees
+  };
+
+  // Build the transaction
+  const result = await sdk.createNativeTransferTransaction(transferParams);
+  console.log("✅ Transfer transaction created successfully!");
+  console.log("📍 From:", result.fromPublicKey.toBase58());
+  console.log("📍 To:", result.toPublicKey.toBase58());
+  console.log("💰 Amount:", result.amountInLamports / 1_000_000_000, "SOL");
+  console.log("💳 Fee Payer:", result.feePayerPublicKey.toBase58());
+  console.log("📦 Instructions count:", result.instructions.length);
+
+  // Sign with sender keypair (since sender is also fee payer)
+  const privateKeyBuf = bs58.decode("your sender private key");
+  const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf));
+  
+  const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+  console.log("✅ Transaction signed successfully!");
+
+  // Submit the transaction
+  const submitResult = await sdk.submitTransaction(signedTx);
+  console.log("Transaction signature:", submitResult.signature);
+}
+
+// Example 9: Native SOL Transfer with dual signers (admin pays fees)
+export async function transferSOLDualSigner() {
+  const sdk = createGorbchainSDK();
+
+  // Transfer parameters with separate fee payer
+  const transferParams = {
+    fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"), // Sender
+    toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"), // Recipient
+    amountInSOL: 0.5, // 0.5 SOL
+    feePayerPublicKey: new PublicKey("AdminPublicKeyHere"), // Admin pays fees
+  };
+
+  // Build the transaction
+  const result = await sdk.createNativeTransferTransaction(transferParams);
+  console.log("✅ Transfer transaction created successfully!");
+  console.log("📍 From:", result.fromPublicKey.toBase58());
+  console.log("📍 To:", result.toPublicKey.toBase58());
+  console.log("💰 Amount:", result.amountInLamports / 1_000_000_000, "SOL");
+  console.log("💳 Fee Payer:", result.feePayerPublicKey.toBase58());
+
+  // Sign with both sender and fee payer keypairs
+  const senderPrivateKeyBuf = bs58.decode("your sender private key");
+  const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(senderPrivateKeyBuf));
+
+  const feePayerPrivateKeyBuf = bs58.decode("your admin private key");
+  const feePayerKeypair = Keypair.fromSecretKey(Uint8Array.from(feePayerPrivateKeyBuf));
+
+  const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair, feePayerKeypair);
+  console.log("✅ Transaction signed with dual signers!");
+
+  // Submit the transaction
+  const submitResult = await sdk.submitTransaction(signedTx);
+  console.log("Transaction signature:", submitResult.signature);
+}
+
+// Example 10: Native SOL Transfer with wallet adapter
+export async function transferSOLWithWallet(wallet: any) {
+  const sdk = createGorbchainSDK();
+
+  // Transfer parameters
+  const transferParams = {
+    fromPublicKey: wallet.publicKey, // Wallet is the sender
+    toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"), // Recipient
+    amountInSOL: 0.25, // 0.25 SOL
+    // feePayerPublicKey not provided, so wallet will pay fees
+  };
+
+  // Build the transaction
+  const result = await sdk.createNativeTransferTransaction(transferParams);
+  console.log("✅ Transfer transaction created successfully!");
+
+  // Sign with wallet (since wallet is also fee payer)
+  const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet);
+  console.log("✅ Transaction signed with wallet!");
+
+  // Simulate before submitting (optional but recommended)
+  const simulation = await sdk.simulateTransaction(signedTx);
+  if (!simulation.success) {
+    throw new Error(`Simulation failed: ${simulation.error}`);
+  }
+
+  // Submit the transaction
+  const submitResult = await sdk.submitTransaction(signedTx);
+  if (!submitResult.success) {
+    throw new Error(`Transaction failed: ${submitResult.error}`);
+  }
+
+  // Wait for confirmation
+  const confirmation = await sdk.waitForConfirmation(submitResult.signature);
+  if (!confirmation.success) {
+    throw new Error(`Confirmation failed: ${confirmation.error}`);
+  }
+
+  console.log("✅ Transfer completed successfully!");
+  console.log("Signature:", submitResult.signature);
+}
+
+// Example 11: Native SOL Transfer with wallet and admin fee payer
+export async function transferSOLWithWalletAndAdmin(wallet: any) {
+  const sdk = createGorbchainSDK();
+
+  // Transfer parameters with admin as fee payer
+  const transferParams = {
+    fromPublicKey: wallet.publicKey, // Wallet is the sender
+    toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"), // Recipient
+    amountInSOL: 1.0, // 1.0 SOL
+    feePayerPublicKey: new PublicKey("AdminPublicKeyHere"), // Admin pays fees
+  };
+
+  // Build the transaction
+  const result = await sdk.createNativeTransferTransaction(transferParams);
+  console.log("✅ Transfer transaction created successfully!");
+
+  // Admin keypair for fee payment
+  const adminPrivateKeyBuf = bs58.decode("your admin private key");
+  const adminKeypair = Keypair.fromSecretKey(Uint8Array.from(adminPrivateKeyBuf));
+
+  // Sign with wallet and admin keypair
+  const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet, adminKeypair);
+  console.log("✅ Transaction signed with wallet and admin!");
+
+  // Submit the transaction
+  const submitResult = await sdk.submitTransaction(signedTx);
+  console.log("Transaction signature:", submitResult.signature);
+}
+
+// Example 12: Batch native transfers
+export async function batchNativeTransfers() {
+  const sdk = createGorbchainSDK();
+
+  const transfers = [
+    {
+      fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+      toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"),
+      amountInSOL: 0.1,
+    },
+    {
+      fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+      toPublicKey: new PublicKey("AnotherRecipientPublicKey"),
+      amountInSOL: 0.2,
+    },
+    {
+      fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+      toPublicKey: new PublicKey("ThirdRecipientPublicKey"),
+      amountInSOL: 0.3,
+    },
+  ];
+
+  const results = [];
+  const senderPrivateKeyBuf = bs58.decode("your sender private key");
+  const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(senderPrivateKeyBuf));
+
+  for (const transfer of transfers) {
+    const result = await sdk.createNativeTransferTransaction(transfer);
+    const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+    const submitResult = await sdk.submitTransaction(signedTx);
+    results.push(submitResult);
+  }
+
+  console.log("✅ Batch transfers completed!");
+  console.log("Results:", results.map(r => r.signature));
+}
+
+// Example 13: Error handling for native transfers
+export async function transferSOLWithErrorHandling() {
+  const sdk = createGorbchainSDK();
+
+  try {
+    // Test with invalid amount
+    const invalidTransferParams = {
+      fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+      toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"),
+      amountInSOL: -0.1, // Invalid negative amount
+    };
+
+    await sdk.createNativeTransferTransaction(invalidTransferParams);
+  } catch (error: any) {
+    console.error("Expected error for invalid amount:", error.message);
+  }
+
+  try {
+    // Test with zero amount
+    const zeroTransferParams = {
+      fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+      toPublicKey: new PublicKey("9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"),
+      amountInSOL: 0, // Invalid zero amount
+    };
+
+    await sdk.createNativeTransferTransaction(zeroTransferParams);
+  } catch (error: any) {
+    console.error("Expected error for zero amount:", error.message);
+  }
+
+  console.log("✅ Error handling tests completed!");
+}
+
 // uncomment the function you want to run
 // createTokenOnGorbchain();
 // createNFTOnGorbchain();
+// transferSOLSingleSigner();
+// transferSOLDualSigner();
+// transferSOLWithWallet(wallet);
+// transferSOLWithWalletAndAdmin(wallet);
+// batchNativeTransfers();
+// transferSOLWithErrorHandling();

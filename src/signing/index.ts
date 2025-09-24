@@ -6,6 +6,8 @@ import {
 import {
   SignWithKeypair,
   SignWithWalletAdapter,
+  SignWithDualKeypairs,
+  SignWithWalletAndKeypair,
   Wallet,
   SigningError,
 } from "../types";
@@ -130,4 +132,96 @@ export function validateKeypair(keypair: any): keypair is Keypair {
     keypair.secretKey instanceof Uint8Array &&
     keypair.secretKey.length === 64
   );
+}
+
+/**
+ * Signs a transaction with dual keypairs (sender and optional fee payer)
+ * @param transaction - Transaction to sign
+ * @param senderKeypair - Sender keypair (always required)
+ * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
+ * @returns Signed transaction
+ */
+export const signWithDualKeypairs: SignWithDualKeypairs = async (
+  transaction: Transaction,
+  senderKeypair: Keypair,
+  feePayerKeypair?: Keypair
+): Promise<Transaction> => {
+  try {
+    if (!validateKeypair(senderKeypair)) {
+      throw new SigningError("Invalid sender keypair provided");
+    }
+
+    // Always sign with sender keypair
+    transaction.partialSign(senderKeypair);
+
+    // If fee payer is different from sender, sign with fee payer keypair too
+    if (feePayerKeypair && validateKeypair(feePayerKeypair)) {
+      // Check if fee payer is different from sender
+      if (!feePayerKeypair.publicKey.equals(senderKeypair.publicKey)) {
+        transaction.partialSign(feePayerKeypair);
+      }
+    }
+
+    return transaction;
+  } catch (error: any) {
+    throw new SigningError(`Failed to sign transaction with dual keypairs: ${error.message}`);
+  }
+};
+
+/**
+ * Signs a transaction with wallet and optional fee payer keypair
+ * @param transaction - Transaction to sign
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Signed transaction
+ */
+export const signTransferWithWalletAndKeypair: SignWithWalletAndKeypair = async (
+  transaction: Transaction,
+  wallet: Wallet,
+  feePayerKeypair?: Keypair
+): Promise<Transaction> => {
+  try {
+    if (!validateWallet(wallet)) {
+      throw new SigningError("Invalid wallet provided");
+    }
+
+    // First sign with wallet
+    const walletSignedTx = await signWithWalletAdapter(transaction, wallet);
+
+    // If fee payer keypair is provided and different from wallet, sign with it too
+    if (feePayerKeypair && validateKeypair(feePayerKeypair)) {
+      // Check if fee payer is different from wallet
+      if (!feePayerKeypair.publicKey.equals(wallet.publicKey)) {
+        walletSignedTx.partialSign(feePayerKeypair);
+      }
+    }
+
+    return walletSignedTx;
+  } catch (error: any) {
+    throw new SigningError(`Failed to sign transaction with wallet and keypair: ${error.message}`);
+  }
+};
+
+/**
+ * Creates a signing function for native transfers that handles dual signers
+ * @param senderKeypair - Sender keypair
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+export function createTransferSigner(senderKeypair: Keypair, feePayerKeypair?: Keypair) {
+  return async (transaction: Transaction): Promise<Transaction> => {
+    return signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair);
+  };
+}
+
+/**
+ * Creates a signing function for native transfers with wallet and fee payer
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+export function createTransferWalletSigner(wallet: Wallet, feePayerKeypair?: Keypair) {
+  return async (transaction: Transaction): Promise<Transaction> => {
+    return signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair);
+  };
 }

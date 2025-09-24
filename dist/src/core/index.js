@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createMintToInstruction = exports.createAssociatedTokenAccountInstruction = exports.createInitializeInstruction = exports.ExtensionType = exports.getMintLen = exports.createInitializeMetadataPointerInstruction = exports.getAssociatedTokenAddressSync = exports.createInitializeMintInstruction = exports.SystemProgram = exports.Transaction = exports.PublicKey = exports.Keypair = exports.Connection = exports.getTransactionDetails = exports.waitForConfirmation = exports.simulateTransaction = exports.submitTransactions = exports.submitTransaction = exports.validateKeypair = exports.validateWallet = exports.createCombinedSigner = exports.signWithWalletAndKeypair = exports.signAllWithWalletAdapter = exports.signWithWalletAdapter = exports.signWithKeypair = exports.createNFTTransaction = exports.createTokenTransaction = exports.GORB = exports.createBlockchainConfig = exports.DEFAULT_CONFIGS = exports.SOLANA_DEVNET_CONFIG = exports.SOLANA_MAINNET_CONFIG = exports.GORBCHAIN_CONFIG = exports.SOLANA_PROGRAMS = exports.GORBCHAIN_PROGRAMS = exports.SigningError = exports.TransactionError = exports.SDKError = exports.createSolanaSDK = exports.createGorbchainSDK = exports.createSDK = exports.SolanaSDK = void 0;
+exports.createMintToInstruction = exports.createAssociatedTokenAccountInstruction = exports.createInitializeInstruction = exports.ExtensionType = exports.getMintLen = exports.createInitializeMetadataPointerInstruction = exports.getAssociatedTokenAddressSync = exports.createInitializeMintInstruction = exports.SystemProgram = exports.Transaction = exports.PublicKey = exports.Keypair = exports.Connection = exports.getTransactionDetails = exports.waitForConfirmation = exports.simulateTransaction = exports.submitTransactions = exports.submitTransaction = exports.createTransferWalletSigner = exports.createTransferSigner = exports.signTransferWithWalletAndKeypair = exports.signWithDualKeypairs = exports.validateKeypair = exports.validateWallet = exports.createCombinedSigner = exports.signWithWalletAndKeypair = exports.signAllWithWalletAdapter = exports.signWithWalletAdapter = exports.signWithKeypair = exports.createNativeTransferTransaction = exports.createNFTTransaction = exports.createTokenTransaction = exports.GORB = exports.createBlockchainConfig = exports.DEFAULT_CONFIGS = exports.SOLANA_DEVNET_CONFIG = exports.SOLANA_MAINNET_CONFIG = exports.GORBCHAIN_CONFIG = exports.SOLANA_PROGRAMS = exports.GORBCHAIN_PROGRAMS = exports.SigningError = exports.TransactionError = exports.SDKError = exports.createSolanaSDK = exports.createGorbchainSDK = exports.createSDK = exports.SolanaSDK = void 0;
 // Main SDK exports
 var sdk_1 = require("./sdk");
 Object.defineProperty(exports, "SolanaSDK", { enumerable: true, get: function () { return sdk_1.SolanaSDK; } });
@@ -26,6 +26,7 @@ Object.defineProperty(exports, "GORB", { enumerable: true, get: function () { re
 var builders_1 = require("../builders");
 Object.defineProperty(exports, "createTokenTransaction", { enumerable: true, get: function () { return builders_1.createTokenTransaction; } });
 Object.defineProperty(exports, "createNFTTransaction", { enumerable: true, get: function () { return builders_1.createNFTTransaction; } });
+Object.defineProperty(exports, "createNativeTransferTransaction", { enumerable: true, get: function () { return builders_1.createNativeTransferTransaction; } });
 // Signing utility exports
 var signing_1 = require("../signing");
 Object.defineProperty(exports, "signWithKeypair", { enumerable: true, get: function () { return signing_1.signWithKeypair; } });
@@ -35,6 +36,10 @@ Object.defineProperty(exports, "signWithWalletAndKeypair", { enumerable: true, g
 Object.defineProperty(exports, "createCombinedSigner", { enumerable: true, get: function () { return signing_1.createCombinedSigner; } });
 Object.defineProperty(exports, "validateWallet", { enumerable: true, get: function () { return signing_1.validateWallet; } });
 Object.defineProperty(exports, "validateKeypair", { enumerable: true, get: function () { return signing_1.validateKeypair; } });
+Object.defineProperty(exports, "signWithDualKeypairs", { enumerable: true, get: function () { return signing_1.signWithDualKeypairs; } });
+Object.defineProperty(exports, "signTransferWithWalletAndKeypair", { enumerable: true, get: function () { return signing_1.signTransferWithWalletAndKeypair; } });
+Object.defineProperty(exports, "createTransferSigner", { enumerable: true, get: function () { return signing_1.createTransferSigner; } });
+Object.defineProperty(exports, "createTransferWalletSigner", { enumerable: true, get: function () { return signing_1.createTransferWalletSigner; } });
 // Submission utility exports
 var submission_1 = require("../submission");
 Object.defineProperty(exports, "submitTransaction", { enumerable: true, get: function () { return submission_1.submitTransaction; } });
