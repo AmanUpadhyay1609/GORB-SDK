@@ -60,6 +60,45 @@ export interface TransferResult {
     explorerUrl?: string;
     error?: string;
 }
+export interface TokenInfo {
+    address: string;
+    symbol: string;
+    decimals: number;
+    name?: string;
+}
+export interface SwapParams {
+    fromTokenAmount: number;
+    fromToken: TokenInfo;
+    toToken: TokenInfo;
+    fromPublicKey: PublicKey;
+    feePayerPublicKey?: PublicKey;
+    slippageTolerance?: number;
+}
+export interface SwapTransactionResult {
+    transaction: Transaction;
+    fromToken: TokenInfo;
+    toToken: TokenInfo;
+    fromTokenAmount: number;
+    fromTokenAmountLamports: bigint;
+    fromPublicKey: PublicKey;
+    feePayerPublicKey: PublicKey;
+    poolPDA: PublicKey;
+    tokenA: PublicKey;
+    tokenB: PublicKey;
+    vaultA: PublicKey;
+    vaultB: PublicKey;
+    userFromToken: PublicKey;
+    userToToken: PublicKey;
+    directionAtoB: boolean;
+    isNativeSOLSwap: boolean;
+    instructions: any[];
+}
+export interface SwapResult {
+    success: boolean;
+    signature?: TransactionSignature;
+    explorerUrl?: string;
+    error?: string;
+}
 export type SignWithKeypair = (transaction: Transaction, keypair: Keypair) => Promise<Transaction>;
 export type SignWithWalletAdapter = (transaction: Transaction, wallet: any) => Promise<Transaction>;
 export type SignWithDualKeypairs = (transaction: Transaction, senderKeypair: Keypair, feePayerKeypair?: Keypair) => Promise<Transaction>;

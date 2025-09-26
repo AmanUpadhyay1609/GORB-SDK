@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { CreateTokenParams, CreateNFTParams, TransactionResult, BlockchainConfig, TransferSOLParams, TransferTransactionResult } from "../types";
+import { CreateTokenParams, CreateNFTParams, TransactionResult, BlockchainConfig, TransferSOLParams, TransferTransactionResult, SwapParams, SwapTransactionResult } from "../types";
 /**
  * Creates a token creation transaction without signing
  * @param connection - Solana connection
@@ -26,4 +26,12 @@ export declare function createNFTTransaction(connection: Connection, config: Blo
  * @returns Transfer transaction result
  */
 export declare function createNativeTransferTransaction(connection: Connection, _config: BlockchainConfig, params: TransferSOLParams): Promise<TransferTransactionResult>;
+/**
+ * Creates a universal swap transaction
+ * @param connection - Solana connection
+ * @param config - Blockchain configuration
+ * @param params - Swap parameters
+ * @returns Swap transaction result
+ */
+export declare function createSwapTransaction(connection: Connection, _config: BlockchainConfig, params: SwapParams): Promise<SwapTransactionResult>;
 //# sourceMappingURL=index.d.ts.map

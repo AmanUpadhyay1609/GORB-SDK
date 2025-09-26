@@ -20,6 +20,13 @@ exports.transferSOLWithWallet = transferSOLWithWallet;
 exports.transferSOLWithWalletAndAdmin = transferSOLWithWalletAndAdmin;
 exports.batchNativeTransfers = batchNativeTransfers;
 exports.transferSOLWithErrorHandling = transferSOLWithErrorHandling;
+exports.swapTokensSingleSigner = swapTokensSingleSigner;
+exports.swapTokensDualSigner = swapTokensDualSigner;
+exports.swapTokensWithWallet = swapTokensWithWallet;
+exports.swapTokensWithWalletAndAdmin = swapTokensWithWalletAndAdmin;
+exports.universalSwapExample = universalSwapExample;
+exports.batchTokenSwaps = batchTokenSwaps;
+exports.swapTokensWithErrorHandling = swapTokensWithErrorHandling;
 const core_1 = require("../core");
 const bs58_1 = __importDefault(require("bs58"));
 // Example 1: Using Gorbchain SDK
@@ -396,6 +403,345 @@ async function transferSOLWithErrorHandling() {
     }
     console.log("✅ Error handling tests completed!");
 }
+// Example 14: Token Swap with single signer (sender pays fees)
+async function swapTokensSingleSigner() {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    // Token information
+    const fromToken = {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+    };
+    const toToken = {
+        address: "So11111111111111111111111111111111111111112", // SOL
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+    };
+    // Swap parameters
+    const swapParams = {
+        fromTokenAmount: 100, // 100 USDC
+        fromToken,
+        toToken,
+        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"), // Sender
+        // feePayerPublicKey not provided, so sender will pay fees
+        slippageTolerance: 0.5, // 0.5% slippage
+    };
+    // Build the transaction
+    const result = await sdk.createSwapTransaction(swapParams);
+    console.log("✅ Swap transaction created successfully!");
+    console.log("🔄 From:", result.fromToken.symbol, result.fromTokenAmount);
+    console.log("🔄 To:", result.toToken.symbol);
+    console.log("📍 Pool PDA:", result.poolPDA.toBase58());
+    console.log("📍 Token A:", result.tokenA.toBase58());
+    console.log("📍 Token B:", result.tokenB.toBase58());
+    console.log("📍 Direction:", result.directionAtoB ? "A to B" : "B to A");
+    console.log("📍 Native SOL Swap:", result.isNativeSOLSwap);
+    console.log("💳 Fee Payer:", result.feePayerPublicKey.toBase58());
+    // Sign with sender keypair (since sender is also fee payer)
+    const privateKeyBuf = bs58_1.default.decode("your sender private key");
+    const senderKeypair = core_1.Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf));
+    const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+    console.log("✅ Transaction signed successfully!");
+    // Submit the transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    console.log("Swap signature:", submitResult.signature);
+}
+// Example 15: Token Swap with dual signers (admin pays fees)
+async function swapTokensDualSigner() {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    // Token information
+    const fromToken = {
+        address: "So11111111111111111111111111111111111111112", // SOL
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+    };
+    const toToken = {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+    };
+    // Swap parameters with separate fee payer
+    const swapParams = {
+        fromTokenAmount: 1.5, // 1.5 SOL
+        fromToken,
+        toToken,
+        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"), // Sender
+        feePayerPublicKey: new core_1.PublicKey("AdminPublicKeyHere"), // Admin pays fees
+        slippageTolerance: 1.0, // 1% slippage
+    };
+    // Build the transaction
+    const result = await sdk.createSwapTransaction(swapParams);
+    console.log("✅ Swap transaction created successfully!");
+    // Sign with both sender and fee payer keypairs
+    const senderPrivateKeyBuf = bs58_1.default.decode("your sender private key");
+    const senderKeypair = core_1.Keypair.fromSecretKey(Uint8Array.from(senderPrivateKeyBuf));
+    const feePayerPrivateKeyBuf = bs58_1.default.decode("your admin private key");
+    const feePayerKeypair = core_1.Keypair.fromSecretKey(Uint8Array.from(feePayerPrivateKeyBuf));
+    const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair, feePayerKeypair);
+    console.log("✅ Transaction signed with dual signers!");
+    // Submit the transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    console.log("Swap signature:", submitResult.signature);
+}
+// Example 16: Token Swap with wallet adapter
+async function swapTokensWithWallet(wallet) {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    // Token information
+    const fromToken = {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+    };
+    const toToken = {
+        address: "So11111111111111111111111111111111111111112", // SOL
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+    };
+    // Swap parameters
+    const swapParams = {
+        fromTokenAmount: 50, // 50 USDC
+        fromToken,
+        toToken,
+        fromPublicKey: wallet.publicKey, // Wallet is the sender
+        // feePayerPublicKey not provided, so wallet will pay fees
+        slippageTolerance: 0.3, // 0.3% slippage
+    };
+    // Build the transaction
+    const result = await sdk.createSwapTransaction(swapParams);
+    console.log("✅ Swap transaction created successfully!");
+    // Sign with wallet (since wallet is also fee payer)
+    const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet);
+    console.log("✅ Transaction signed with wallet!");
+    // Simulate before submitting (optional but recommended)
+    const simulation = await sdk.simulateTransaction(signedTx);
+    if (!simulation.success) {
+        throw new Error(`Simulation failed: ${simulation.error}`);
+    }
+    // Submit the transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    if (!submitResult.success) {
+        throw new Error(`Transaction failed: ${submitResult.error}`);
+    }
+    // Wait for confirmation
+    const confirmation = await sdk.waitForConfirmation(submitResult.signature);
+    if (!confirmation.success) {
+        throw new Error(`Confirmation failed: ${confirmation.error}`);
+    }
+    console.log("✅ Swap completed successfully!");
+    console.log("Signature:", submitResult.signature);
+}
+// Example 17: Token Swap with wallet and admin fee payer
+async function swapTokensWithWalletAndAdmin(wallet) {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    // Token information
+    const fromToken = {
+        address: "So11111111111111111111111111111111111111112", // SOL
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+    };
+    const toToken = {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+    };
+    // Swap parameters with admin as fee payer
+    const swapParams = {
+        fromTokenAmount: 2.0, // 2.0 SOL
+        fromToken,
+        toToken,
+        fromPublicKey: wallet.publicKey, // Wallet is the sender
+        feePayerPublicKey: new core_1.PublicKey("AdminPublicKeyHere"), // Admin pays fees
+        slippageTolerance: 0.8, // 0.8% slippage
+    };
+    // Build the transaction
+    const result = await sdk.createSwapTransaction(swapParams);
+    console.log("✅ Swap transaction created successfully!");
+    // Admin keypair for fee payment
+    const adminPrivateKeyBuf = bs58_1.default.decode("your admin private key");
+    const adminKeypair = core_1.Keypair.fromSecretKey(Uint8Array.from(adminPrivateKeyBuf));
+    // Sign with wallet and admin keypair
+    const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet, adminKeypair);
+    console.log("✅ Transaction signed with wallet and admin!");
+    // Submit the transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    console.log("Swap signature:", submitResult.signature);
+}
+// Example 18: Universal Swap (automatically detects SOL involvement)
+async function universalSwapExample() {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    // Example 1: Token to Token swap
+    const tokenToTokenSwap = {
+        fromTokenAmount: 100,
+        fromToken: {
+            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+            symbol: "USDC",
+            decimals: 6,
+            name: "USD Coin"
+        },
+        toToken: {
+            address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
+            symbol: "USDT",
+            decimals: 6,
+            name: "Tether USD"
+        },
+        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        slippageTolerance: 0.5,
+    };
+    // Example 2: SOL to Token swap
+    const solToTokenSwap = {
+        fromTokenAmount: 1.0, // 1 SOL
+        fromToken: {
+            address: "So11111111111111111111111111111111111111112", // SOL
+            symbol: "SOL",
+            decimals: 9,
+            name: "Solana"
+        },
+        toToken: {
+            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+            symbol: "USDC",
+            decimals: 6,
+            name: "USD Coin"
+        },
+        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        slippageTolerance: 0.5,
+    };
+    // Example 3: Token to SOL swap
+    const tokenToSolSwap = {
+        fromTokenAmount: 50,
+        fromToken: {
+            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+            symbol: "USDC",
+            decimals: 6,
+            name: "USD Coin"
+        },
+        toToken: {
+            address: "So11111111111111111111111111111111111111112", // SOL
+            symbol: "SOL",
+            decimals: 9,
+            name: "Solana"
+        },
+        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        slippageTolerance: 0.5,
+    };
+    console.log("🔄 Building Token to Token swap...");
+    const result1 = await sdk.createSwapTransaction(tokenToTokenSwap);
+    console.log("✅ Token to Token swap built:", result1.isNativeSOLSwap ? "Native SOL" : "Regular");
+    console.log("🔄 Building SOL to Token swap...");
+    const result2 = await sdk.createSwapTransaction(solToTokenSwap);
+    console.log("✅ SOL to Token swap built:", result2.isNativeSOLSwap ? "Native SOL" : "Regular");
+    console.log("🔄 Building Token to SOL swap...");
+    const result3 = await sdk.createSwapTransaction(tokenToSolSwap);
+    console.log("✅ Token to SOL swap built:", result3.isNativeSOLSwap ? "Native SOL" : "Regular");
+    console.log("🎉 Universal swap examples completed!");
+}
+// Example 19: Batch token swaps
+async function batchTokenSwaps() {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    const swaps = [
+        {
+            fromToken: {
+                address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                symbol: "USDC",
+                decimals: 6,
+                name: "USD Coin"
+            },
+            toToken: {
+                address: "So11111111111111111111111111111111111111112",
+                symbol: "SOL",
+                decimals: 9,
+                name: "Solana"
+            },
+            amount: 25, // 25 USDC
+        },
+        {
+            fromToken: {
+                address: "So11111111111111111111111111111111111111112",
+                symbol: "SOL",
+                decimals: 9,
+                name: "Solana"
+            },
+            toToken: {
+                address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                symbol: "USDC",
+                decimals: 6,
+                name: "USD Coin"
+            },
+            amount: 0.5, // 0.5 SOL
+        },
+    ];
+    const results = [];
+    const senderPrivateKeyBuf = bs58_1.default.decode("your sender private key");
+    const senderKeypair = core_1.Keypair.fromSecretKey(Uint8Array.from(senderPrivateKeyBuf));
+    for (const swap of swaps) {
+        const swapParams = {
+            fromTokenAmount: swap.amount,
+            fromToken: swap.fromToken,
+            toToken: swap.toToken,
+            fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        };
+        const result = await sdk.createSwapTransaction(swapParams);
+        const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+        const submitResult = await sdk.submitTransaction(signedTx);
+        results.push(submitResult);
+    }
+    console.log("✅ Batch swaps completed!");
+    console.log("Results:", results.map(r => r.signature));
+}
+// Example 20: Error handling for token swaps
+async function swapTokensWithErrorHandling() {
+    const sdk = (0, core_1.createGorbchainSDK)();
+    try {
+        // Test with invalid amount
+        const invalidSwapParams = {
+            fromTokenAmount: -10, // Invalid negative amount
+            fromToken: {
+                address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                symbol: "USDC",
+                decimals: 6,
+            },
+            toToken: {
+                address: "So11111111111111111111111111111111111111112",
+                symbol: "SOL",
+                decimals: 9,
+            },
+            fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        };
+        await sdk.createSwapTransaction(invalidSwapParams);
+    }
+    catch (error) {
+        console.error("Expected error for invalid amount:", error.message);
+    }
+    try {
+        // Test with invalid token addresses
+        const invalidTokenParams = {
+            fromTokenAmount: 10,
+            fromToken: {
+                address: "", // Invalid empty address
+                symbol: "USDC",
+                decimals: 6,
+            },
+            toToken: {
+                address: "So11111111111111111111111111111111111111112",
+                symbol: "SOL",
+                decimals: 9,
+            },
+            fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        };
+        await sdk.createSwapTransaction(invalidTokenParams);
+    }
+    catch (error) {
+        console.error("Expected error for invalid token address:", error.message);
+    }
+    console.log("✅ Error handling tests completed!");
+}
 // uncomment the function you want to run
 // createTokenOnGorbchain();
 // createNFTOnGorbchain();
@@ -405,4 +751,11 @@ async function transferSOLWithErrorHandling() {
 // transferSOLWithWalletAndAdmin(wallet);
 // batchNativeTransfers();
 // transferSOLWithErrorHandling();
+// swapTokensSingleSigner();
+// swapTokensDualSigner();
+// swapTokensWithWallet(wallet);
+// swapTokensWithWalletAndAdmin(wallet);
+// universalSwapExample();
+// batchTokenSwaps();
+// swapTokensWithErrorHandling();
 //# sourceMappingURL=index.js.map

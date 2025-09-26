@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createTokenTransaction = createTokenTransaction;
 exports.createNFTTransaction = createNFTTransaction;
 exports.createNativeTransferTransaction = createNativeTransferTransaction;
+exports.createSwapTransaction = createSwapTransaction;
 const web3_js_1 = require("@solana/web3.js");
 const spl_token_1 = require("@solana/spl-token");
 const types_1 = require("../types");
@@ -229,6 +230,206 @@ async function createNativeTransferTransaction(connection, _config, params) {
     }
     catch (error) {
         throw new types_1.SDKError(`Failed to create native transfer transaction: ${error.message}`);
+    }
+}
+// AMM Program constants (these would typically come from your AMM program)
+const AMM_PROGRAM_ID = new web3_js_1.PublicKey("11111111111111111111111111111111"); // Placeholder - replace with actual AMM program ID
+const NATIVE_SOL_MINT = new web3_js_1.PublicKey("So11111111111111111111111111111111111111112");
+const LAMPORTS_PER_SOL = 1000000000;
+// Instruction discriminators and data sizes
+const INSTRUCTION_DISCRIMINATORS = {
+    SWAP: 0x01, // Replace with actual discriminator
+};
+const INSTRUCTION_DATA_SIZES = {
+    SWAP: 10, // 1 byte discriminator + 8 bytes amount + 1 byte direction
+};
+// Helper function to convert token amount to lamports
+function tokenAmountToLamports(amount, decimals) {
+    return BigInt(Math.floor(amount * Math.pow(10, decimals)));
+}
+// Helper function to check if token is native SOL
+function isNativeSOL(tokenAddress) {
+    return tokenAddress === NATIVE_SOL_MINT.toBase58() || tokenAddress === "So11111111111111111111111111111111111111112";
+}
+// Helper function to get user token account address
+function getUserTokenAccount(mint, user) {
+    // For native SOL, return the user's public key
+    if (mint.equals(NATIVE_SOL_MINT)) {
+        return user;
+    }
+    // For SPL tokens, derive the associated token account
+    return web3_js_1.PublicKey.findProgramAddressSync([user.toBuffer(), new web3_js_1.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").toBuffer(), mint.toBuffer()], new web3_js_1.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"))[0];
+}
+// Helper function to derive vault PDA
+function deriveVaultPDA(poolPDA, tokenMint, isNativeSOLPool = false) {
+    if (isNativeSOLPool && tokenMint.equals(NATIVE_SOL_MINT)) {
+        // For native SOL pools, the vault might be the pool PDA itself or a specific derivation
+        return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from("vault_sol"), poolPDA.toBuffer()], AMM_PROGRAM_ID);
+    }
+    // For regular SPL tokens
+    return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from("vault"), poolPDA.toBuffer(), tokenMint.toBuffer()], AMM_PROGRAM_ID);
+}
+// Helper function to find pool configuration
+async function findPoolConfiguration(fromTokenMint, toTokenMint, _connection) {
+    // This would use the same logic as your existing findPoolConfiguration function
+    // For now, using a placeholder - you'll need to implement the actual pool finding logic
+    // Placeholder implementation - replace with actual pool finding logic
+    const poolPDA = web3_js_1.PublicKey.findProgramAddressSync([Buffer.from("pool"), fromTokenMint.toBuffer(), toTokenMint.toBuffer()], AMM_PROGRAM_ID)[0];
+    // Determine direction based on token order (this is a simplified example)
+    const directionAtoB = fromTokenMint.toBase58() < toTokenMint.toBase58();
+    return {
+        poolPDA,
+        tokenA: directionAtoB ? fromTokenMint : toTokenMint,
+        tokenB: directionAtoB ? toTokenMint : fromTokenMint,
+        directionAtoB,
+    };
+}
+// Helper function to get common accounts
+function getCommonAccounts(_user) {
+    // This would return the common accounts needed for the swap instruction
+    // Based on your existing getCommonAccounts function
+    return [
+        { pubkey: new web3_js_1.PublicKey("11111111111111111111111111111111"), isSigner: false, isWritable: false }, // System Program
+        { pubkey: new web3_js_1.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), isSigner: false, isWritable: false }, // Token Program
+        { pubkey: new web3_js_1.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"), isSigner: false, isWritable: false }, // Associated Token Program
+    ];
+}
+/**
+ * Creates a universal swap transaction
+ * @param connection - Solana connection
+ * @param config - Blockchain configuration
+ * @param params - Swap parameters
+ * @returns Swap transaction result
+ */
+async function createSwapTransaction(connection, _config, params) {
+    try {
+        const { fromTokenAmount, fromToken, toToken, fromPublicKey, feePayerPublicKey, slippageTolerance = 0.5, // Default 0.5% slippage
+         } = params;
+        // Validate inputs
+        if (fromTokenAmount <= 0) {
+            throw new types_1.SDKError("Invalid token amount. Amount must be greater than 0");
+        }
+        if (!fromToken.address || !toToken.address) {
+            throw new types_1.SDKError("Invalid token addresses");
+        }
+        // Determine fee payer (defaults to sender if not provided)
+        const actualFeePayer = feePayerPublicKey || fromPublicKey;
+        const FROM_TOKEN_MINT = new web3_js_1.PublicKey(fromToken.address);
+        const TO_TOKEN_MINT = new web3_js_1.PublicKey(toToken.address);
+        // Check if this involves native SOL
+        const isFromSOL = isNativeSOL(fromToken.address);
+        const isToSOL = isNativeSOL(toToken.address);
+        const isNativeSOLSwap = isFromSOL || isToSOL;
+        console.log("🚀 Building swap transaction:", {
+            fromToken: fromToken.symbol,
+            toToken: toToken.symbol,
+            amount: fromTokenAmount,
+            slippageTolerance: `${slippageTolerance}%`,
+            isNativeSOLSwap,
+            direction: isFromSOL ? "SOL → Token" : isToSOL ? "Token → SOL" : "Token → Token"
+        });
+        // Find the correct pool configuration
+        const { poolPDA, tokenA, tokenB, directionAtoB } = await findPoolConfiguration(FROM_TOKEN_MINT, TO_TOKEN_MINT, connection);
+        console.log("✅ Found pool configuration:", {
+            poolPDA: poolPDA.toString(),
+            tokenA: tokenA.toString(),
+            tokenB: tokenB.toString(),
+            direction: directionAtoB ? "A to B" : "B to A"
+        });
+        // Derive vaults based on the actual pool configuration
+        const [vaultA] = deriveVaultPDA(poolPDA, tokenA, isNativeSOLSwap);
+        const [vaultB] = deriveVaultPDA(poolPDA, tokenB, isNativeSOLSwap);
+        console.log("📍 Derived addresses:", {
+            poolPDA: poolPDA.toString(),
+            tokenA: tokenA.toString(),
+            tokenB: tokenB.toString(),
+            vaultA: vaultA.toString(),
+            vaultB: vaultB.toString(),
+            direction: directionAtoB ? "A to B" : "B to A",
+            isNativeSOLSwap
+        });
+        // Get user token accounts
+        const userFromToken = getUserTokenAccount(FROM_TOKEN_MINT, fromPublicKey);
+        const userToToken = getUserTokenAccount(TO_TOKEN_MINT, fromPublicKey);
+        console.log("👤 User token accounts:", {
+            userFromToken: userFromToken.toString(),
+            userToToken: userToToken.toString()
+        });
+        // Convert amount to lamports
+        const amountInLamports = isFromSOL
+            ? BigInt(fromTokenAmount * LAMPORTS_PER_SOL)
+            : tokenAmountToLamports(fromTokenAmount, fromToken.decimals);
+        console.log("🔄 Swap parameters:", {
+            amountIn: fromTokenAmount,
+            amountInLamports: amountInLamports.toString(),
+            direction: directionAtoB ? "A to B" : "B to A",
+            isFromSOL,
+            isToSOL
+        });
+        // Get recent blockhash
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+        // Create transaction
+        const transaction = new web3_js_1.Transaction({
+            feePayer: actualFeePayer,
+            blockhash,
+            lastValidBlockHeight,
+        });
+        // Prepare accounts for Swap (matching Rust program order exactly)
+        // Based on Rust: pool_info, token_a_info, token_b_info, vault_a_info, vault_b_info,
+        // user_in_info, user_out_info, user_info, token_program_info
+        const accounts = [
+            { pubkey: poolPDA, isSigner: false, isWritable: true },
+            { pubkey: tokenA, isSigner: false, isWritable: false },
+            { pubkey: tokenB, isSigner: false, isWritable: false },
+            { pubkey: vaultA, isSigner: false, isWritable: true },
+            { pubkey: vaultB, isSigner: false, isWritable: true },
+            { pubkey: userFromToken, isSigner: false, isWritable: true },
+            { pubkey: userToToken, isSigner: false, isWritable: true },
+            { pubkey: fromPublicKey, isSigner: true, isWritable: false },
+            ...getCommonAccounts(fromPublicKey),
+        ];
+        // Create instruction data (matching Rust Swap struct: amount_in: u64, direction_a_to_b: bool)
+        const data = Buffer.alloc(INSTRUCTION_DATA_SIZES.SWAP);
+        data.writeUInt8(INSTRUCTION_DISCRIMINATORS.SWAP, 0);
+        data.writeBigUInt64LE(amountInLamports, 1);
+        data.writeUInt8(directionAtoB ? 1 : 0, 9);
+        console.log("📝 Instruction data:", data.toString('hex'));
+        console.log("📋 Account count:", accounts.length);
+        console.log("📋 Accounts:", accounts.map((acc, i) => `${i}: ${acc.pubkey.toString()} (signer: ${acc.isSigner}, writable: ${acc.isWritable})`));
+        // Validate that we have the correct number of accounts
+        const expectedAccountCount = 12; // Based on Rust program + common accounts
+        if (accounts.length !== expectedAccountCount) {
+            throw new types_1.SDKError(`Invalid account count. Expected ${expectedAccountCount}, got ${accounts.length}`);
+        }
+        // Add Swap instruction
+        transaction.add({
+            keys: accounts,
+            programId: AMM_PROGRAM_ID,
+            data,
+        });
+        console.log("📤 Swap transaction prepared successfully");
+        return {
+            transaction,
+            fromToken,
+            toToken,
+            fromTokenAmount,
+            fromTokenAmountLamports: amountInLamports,
+            fromPublicKey,
+            feePayerPublicKey: actualFeePayer,
+            poolPDA,
+            tokenA,
+            tokenB,
+            vaultA,
+            vaultB,
+            userFromToken,
+            userToToken,
+            directionAtoB,
+            isNativeSOLSwap,
+            instructions: transaction.instructions,
+        };
+    }
+    catch (error) {
+        throw new types_1.SDKError(`Failed to create swap transaction: ${error.message}`);
     }
 }
 //# sourceMappingURL=index.js.map

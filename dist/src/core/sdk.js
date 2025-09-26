@@ -48,6 +48,14 @@ class SolanaSDK {
         return (0, builders_1.createNativeTransferTransaction)(this.connection, this.config, params);
     }
     /**
+     * Creates a universal swap transaction
+     * @param params - Swap parameters
+     * @returns Swap transaction result
+     */
+    async createSwapTransaction(params) {
+        return (0, builders_1.createSwapTransaction)(this.connection, this.config, params);
+    }
+    /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign
      * @param keypair - Keypair to sign with

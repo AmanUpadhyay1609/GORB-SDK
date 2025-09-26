@@ -11,6 +11,8 @@ import {
   TransactionResult,
   TransferSOLParams,
   TransferTransactionResult,
+  SwapParams,
+  SwapTransactionResult,
   Wallet,
   SDKConfig,
   SDKError,
@@ -24,6 +26,7 @@ import {
   createTokenTransaction,
   createNFTTransaction,
   createNativeTransferTransaction,
+  createSwapTransaction,
 } from "../builders";
 import {
   signWithKeypair,
@@ -86,6 +89,15 @@ export class SolanaSDK {
    */
   async createNativeTransferTransaction(params: TransferSOLParams): Promise<TransferTransactionResult> {
     return createNativeTransferTransaction(this.connection, this.config, params);
+  }
+
+  /**
+   * Creates a universal swap transaction
+   * @param params - Swap parameters
+   * @returns Swap transaction result
+   */
+  async createSwapTransaction(params: SwapParams): Promise<SwapTransactionResult> {
+    return createSwapTransaction(this.connection, this.config, params);
   }
 
   /**

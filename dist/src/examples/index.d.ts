@@ -15,4 +15,11 @@ export declare function transferSOLWithWallet(wallet: any): Promise<void>;
 export declare function transferSOLWithWalletAndAdmin(wallet: any): Promise<void>;
 export declare function batchNativeTransfers(): Promise<void>;
 export declare function transferSOLWithErrorHandling(): Promise<void>;
+export declare function swapTokensSingleSigner(): Promise<void>;
+export declare function swapTokensDualSigner(): Promise<void>;
+export declare function swapTokensWithWallet(wallet: any): Promise<void>;
+export declare function swapTokensWithWalletAndAdmin(wallet: any): Promise<void>;
+export declare function universalSwapExample(): Promise<void>;
+export declare function batchTokenSwaps(): Promise<void>;
+export declare function swapTokensWithErrorHandling(): Promise<void>;
 //# sourceMappingURL=index.d.ts.map

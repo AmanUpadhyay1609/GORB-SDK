@@ -8,6 +8,8 @@ exports.validateWallet = validateWallet;
 exports.validateKeypair = validateKeypair;
 exports.createTransferSigner = createTransferSigner;
 exports.createTransferWalletSigner = createTransferWalletSigner;
+exports.createSwapSigner = createSwapSigner;
+exports.createSwapWalletSigner = createSwapWalletSigner;
 const web3_js_1 = require("@solana/web3.js");
 const types_1 = require("../types");
 /**
@@ -190,6 +192,28 @@ function createTransferSigner(senderKeypair, feePayerKeypair) {
  * @returns Combined signing function
  */
 function createTransferWalletSigner(wallet, feePayerKeypair) {
+    return async (transaction) => {
+        return (0, exports.signTransferWithWalletAndKeypair)(transaction, wallet, feePayerKeypair);
+    };
+}
+/**
+ * Creates a signing function for swap transactions that handles dual signers
+ * @param senderKeypair - Sender keypair
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+function createSwapSigner(senderKeypair, feePayerKeypair) {
+    return async (transaction) => {
+        return (0, exports.signWithDualKeypairs)(transaction, senderKeypair, feePayerKeypair);
+    };
+}
+/**
+ * Creates a signing function for swap transactions with wallet and fee payer
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+function createSwapWalletSigner(wallet, feePayerKeypair) {
     return async (transaction) => {
         return (0, exports.signTransferWithWalletAndKeypair)(transaction, wallet, feePayerKeypair);
     };

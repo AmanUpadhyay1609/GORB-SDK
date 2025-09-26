@@ -13,6 +13,10 @@ export type {
   TransferSOLParams,
   TransferTransactionResult,
   TransferResult,
+  TokenInfo,
+  SwapParams,
+  SwapTransactionResult,
+  SwapResult,
   Wallet,
   SDKConfig,
   SubmitOptions,
@@ -43,6 +47,7 @@ export {
   createTokenTransaction,
   createNFTTransaction,
   createNativeTransferTransaction,
+  createSwapTransaction,
 } from "../builders";
 
 // Signing utility exports
@@ -58,6 +63,8 @@ export {
   signTransferWithWalletAndKeypair,
   createTransferSigner,
   createTransferWalletSigner,
+  createSwapSigner,
+  createSwapWalletSigner,
 } from "../signing";
 
 // Submission utility exports

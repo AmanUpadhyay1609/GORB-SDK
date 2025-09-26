@@ -78,4 +78,18 @@ export declare function createTransferSigner(senderKeypair: Keypair, feePayerKey
  * @returns Combined signing function
  */
 export declare function createTransferWalletSigner(wallet: Wallet, feePayerKeypair?: Keypair): (transaction: Transaction) => Promise<Transaction>;
+/**
+ * Creates a signing function for swap transactions that handles dual signers
+ * @param senderKeypair - Sender keypair
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+export declare function createSwapSigner(senderKeypair: Keypair, feePayerKeypair?: Keypair): (transaction: Transaction) => Promise<Transaction>;
+/**
+ * Creates a signing function for swap transactions with wallet and fee payer
+ * @param wallet - Wallet adapter instance
+ * @param feePayerKeypair - Fee payer keypair (optional)
+ * @returns Combined signing function
+ */
+export declare function createSwapWalletSigner(wallet: Wallet, feePayerKeypair?: Keypair): (transaction: Transaction) => Promise<Transaction>;
 //# sourceMappingURL=index.d.ts.map
