@@ -749,9 +749,16 @@ export async function universalSwapExample() {
   const result2 = await sdk.createSwapTransaction(solToTokenSwap);
   console.log("✅ SOL to Token swap built:", result2.isNativeSOLSwap ? "Native SOL" : "Regular");
 
-  // console.log("🔄 Building Token to SOL swap...");
-  // const result3 = await sdk.createSwapTransaction(tokenToSolSwap);
-  // console.log("✅ Token to SOL swap built:", result3.isNativeSOLSwap ? "Native SOL" : "Regular");
+
+  // Method 1: Single signer (sender pays fees)
+  const senderPrivateKeyBuf = bs58.decode("2N4eeFtjsy7XyUG44F3z5Ci4wbEmUujpQ5dMnWDJNruePK6mer8Te57xCLpGVqwWqvy9FLpGTx8tfUfAasV8NEVq");
+  const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(senderPrivateKeyBuf));
+  const signedTx = await sdk.signWithKeypair(result2.transaction, senderKeypair);
+  console.log("✅ Transaction signed successfully!-->", signedTx);
+
+  const submitResult = await sdk.submitTransaction(signedTx);
+  console.log("✅ Transaction submitted successfully!-->", submitResult);
+
 
   console.log("🎉 Universal swap examples completed!");
 }
@@ -879,6 +886,6 @@ export async function swapTokensWithErrorHandling() {
 // swapTokensDualSigner();
 // swapTokensWithWallet(wallet);
 // swapTokensWithWalletAndAdmin(wallet);
-// universalSwapExample();
+universalSwapExample();
 // batchTokenSwaps();
 // swapTokensWithErrorHandling();

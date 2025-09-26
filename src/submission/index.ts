@@ -22,6 +22,7 @@ export async function submitTransaction(
   options: SubmitOptions = {}
 ): Promise<SubmitResult> {
   try {
+    console.log("🚀 Submitting transaction...");
     const {
       skipPreflight = false,
       maxRetries = 3,

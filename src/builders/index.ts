@@ -629,10 +629,10 @@ export async function createSwapTransaction(
     console.log("📋 Accounts:", accounts.map((acc, i) => `${i}: ${acc.pubkey.toString()} (signer: ${acc.isSigner}, writable: ${acc.isWritable})`));
 
     // // Validate that we have the correct number of accounts
-    // const expectedAccountCount = 12; // Based on Rust program + common accounts
-    // if (accounts.length !== expectedAccountCount) {
-    //   throw new SDKError(`Invalid account count. Expected ${expectedAccountCount}, got ${accounts.length}`);
-    // }
+    const expectedAccountCount = 12; // Based on Rust program + common accounts
+    if (accounts.length !== expectedAccountCount) {
+      throw new SDKError(`Invalid account count. Expected ${expectedAccountCount}, got ${accounts.length}`);
+    }
 
     // Add Swap instruction
     transaction.add({

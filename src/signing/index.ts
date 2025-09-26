@@ -38,7 +38,7 @@ export const signWithKeypair: SignWithKeypair = async (transaction: Transaction,
     transaction.lastValidBlockHeight = lastValidBlockHeight;
     
     transaction.partialSign(keypair);
-    console.log(`transaction after partialSign: ${JSON.stringify(transaction)}`);
+    console.log(`transaction after partialSign: ${JSON.stringify(transaction.instructions[0])}`);
     return transaction;
   } catch (error: any) {
     throw new SigningError(`Failed to sign transaction with keypair: ${error.message}`);
