@@ -65,7 +65,7 @@ class SolanaSDK {
         if (!(0, signing_1.validateKeypair)(keypair)) {
             throw new types_1.SDKError("Invalid keypair provided");
         }
-        return (0, signing_1.signWithKeypair)(transaction, keypair);
+        return (0, signing_1.signWithKeypair)(transaction, keypair, this.connection);
     }
     /**
      * Signs a transaction with wallet adapter
@@ -77,7 +77,7 @@ class SolanaSDK {
         if (!(0, signing_1.validateWallet)(wallet)) {
             throw new types_1.SDKError("Invalid wallet provided");
         }
-        return (0, signing_1.signWithWalletAdapter)(transaction, wallet);
+        return (0, signing_1.signWithWalletAdapter)(transaction, wallet, this.connection);
     }
     /**
      * Signs a transaction with both wallet and keypair
@@ -93,7 +93,7 @@ class SolanaSDK {
         if (!(0, signing_1.validateKeypair)(mintKeypair)) {
             throw new types_1.SDKError("Invalid keypair provided");
         }
-        return (0, signing_1.signWithWalletAndKeypair)(transaction, wallet, mintKeypair);
+        return (0, signing_1.signWithWalletAndKeypair)(transaction, wallet, mintKeypair, this.connection);
     }
     /**
      * Signs a transaction with dual keypairs (for native transfers)
@@ -109,7 +109,7 @@ class SolanaSDK {
         if (feePayerKeypair && !(0, signing_1.validateKeypair)(feePayerKeypair)) {
             throw new types_1.SDKError("Invalid fee payer keypair provided");
         }
-        return (0, signing_1.signWithDualKeypairs)(transaction, senderKeypair, feePayerKeypair);
+        return (0, signing_1.signWithDualKeypairs)(transaction, senderKeypair, this.connection, feePayerKeypair);
     }
     /**
      * Signs a transaction with wallet and optional fee payer keypair (for native transfers)
@@ -125,7 +125,7 @@ class SolanaSDK {
         if (feePayerKeypair && !(0, signing_1.validateKeypair)(feePayerKeypair)) {
             throw new types_1.SDKError("Invalid fee payer keypair provided");
         }
-        return (0, signing_1.signTransferWithWalletAndKeypair)(transaction, wallet, feePayerKeypair);
+        return (0, signing_1.signTransferWithWalletAndKeypair)(transaction, wallet, this.connection, feePayerKeypair);
     }
     /**
      * Submits a signed transaction

@@ -110,7 +110,7 @@ export class SolanaSDK {
     if (!validateKeypair(keypair)) {
       throw new SDKError("Invalid keypair provided");
     }
-    return signWithKeypair(transaction, keypair);
+    return signWithKeypair(transaction, keypair, this.connection);
   }
 
   /**
@@ -123,7 +123,7 @@ export class SolanaSDK {
     if (!validateWallet(wallet)) {
       throw new SDKError("Invalid wallet provided");
     }
-    return signWithWalletAdapter(transaction, wallet);
+    return signWithWalletAdapter(transaction, wallet, this.connection);
   }
 
   /**
@@ -144,7 +144,7 @@ export class SolanaSDK {
     if (!validateKeypair(mintKeypair)) {
       throw new SDKError("Invalid keypair provided");
     }
-    return signWithWalletAndKeypair(transaction, wallet, mintKeypair);
+    return signWithWalletAndKeypair(transaction, wallet, mintKeypair, this.connection);
   }
 
   /**
@@ -165,7 +165,7 @@ export class SolanaSDK {
     if (feePayerKeypair && !validateKeypair(feePayerKeypair)) {
       throw new SDKError("Invalid fee payer keypair provided");
     }
-    return signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair);
+    return signWithDualKeypairs(transaction, senderKeypair, this.connection, feePayerKeypair);
   }
 
   /**
@@ -186,7 +186,7 @@ export class SolanaSDK {
     if (feePayerKeypair && !validateKeypair(feePayerKeypair)) {
       throw new SDKError("Invalid fee payer keypair provided");
     }
-    return signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair);
+    return signTransferWithWalletAndKeypair(transaction, wallet, this.connection, feePayerKeypair);
   }
 
   /**

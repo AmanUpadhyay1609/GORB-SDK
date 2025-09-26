@@ -25,7 +25,7 @@ export declare function createNFTTransaction(connection: Connection, config: Blo
  * @param params - Transfer parameters
  * @returns Transfer transaction result
  */
-export declare function createNativeTransferTransaction(connection: Connection, _config: BlockchainConfig, params: TransferSOLParams): Promise<TransferTransactionResult>;
+export declare function createNativeTransferTransaction(_connection: Connection, _config: BlockchainConfig, params: TransferSOLParams): Promise<TransferTransactionResult>;
 /**
  * Creates a universal swap transaction
  * @param connection - Solana connection

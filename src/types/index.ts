@@ -129,19 +129,21 @@ export interface SwapResult {
 }
 
 // Signing function types
-export type SignWithKeypair = (transaction: Transaction, keypair: Keypair) => Promise<Transaction>;
-export type SignWithWalletAdapter = (transaction: Transaction, wallet: any) => Promise<Transaction>;
+export type SignWithKeypair = (transaction: Transaction, keypair: Keypair, connection: Connection) => Promise<Transaction>;
+export type SignWithWalletAdapter = (transaction: Transaction, wallet: any, connection: Connection) => Promise<Transaction>;
 
 // Dual signer function types for native transfers
 export type SignWithDualKeypairs = (
   transaction: Transaction, 
   senderKeypair: Keypair, 
+  connection: Connection,
   feePayerKeypair?: Keypair
 ) => Promise<Transaction>;
 
 export type SignWithWalletAndKeypair = (
   transaction: Transaction, 
   wallet: Wallet, 
+  connection: Connection,
   feePayerKeypair?: Keypair
 ) => Promise<Transaction>;
 

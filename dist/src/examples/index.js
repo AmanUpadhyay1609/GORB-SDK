@@ -578,68 +578,68 @@ async function swapTokensWithWalletAndAdmin(wallet) {
 async function universalSwapExample() {
     const sdk = (0, core_1.createGorbchainSDK)();
     // Example 1: Token to Token swap
-    const tokenToTokenSwap = {
-        fromTokenAmount: 100,
-        fromToken: {
-            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-            symbol: "USDC",
-            decimals: 6,
-            name: "USD Coin"
-        },
-        toToken: {
-            address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
-            symbol: "USDT",
-            decimals: 6,
-            name: "Tether USD"
-        },
-        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
-        slippageTolerance: 0.5,
-    };
+    // const tokenToTokenSwap: SwapParams = {
+    //   fromTokenAmount: 100,
+    //   fromToken: {
+    //     address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    //     symbol: "USDC",
+    //     decimals: 6,
+    //     name: "USD Coin"
+    //   },
+    //   toToken: {
+    //     address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
+    //     symbol: "USDT",
+    //     decimals: 6,
+    //     name: "Tether USD"
+    //   },
+    //   fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+    //   slippageTolerance: 0.5,
+    // };
     // Example 2: SOL to Token swap
     const solToTokenSwap = {
         fromTokenAmount: 1.0, // 1 SOL
         fromToken: {
             address: "So11111111111111111111111111111111111111112", // SOL
-            symbol: "SOL",
+            symbol: "Gorb",
             decimals: 9,
-            name: "Solana"
+            name: "Gorb"
         },
         toToken: {
-            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-            symbol: "USDC",
-            decimals: 6,
-            name: "USD Coin"
+            address: "4eCdoBMvbUSYZBfvXwqTd7eg9fzzWzQAd54xYFoB8eKf", // USDC
+            symbol: "YH!@",
+            decimals: 7,
+            name: "YH1"
         },
-        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+        fromPublicKey: new core_1.PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
         slippageTolerance: 0.5,
     };
     // Example 3: Token to SOL swap
-    const tokenToSolSwap = {
-        fromTokenAmount: 50,
-        fromToken: {
-            address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-            symbol: "USDC",
-            decimals: 6,
-            name: "USD Coin"
-        },
-        toToken: {
-            address: "So11111111111111111111111111111111111111112", // SOL
-            symbol: "SOL",
-            decimals: 9,
-            name: "Solana"
-        },
-        fromPublicKey: new core_1.PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
-        slippageTolerance: 0.5,
-    };
-    console.log("🔄 Building Token to Token swap...");
-    const result1 = await sdk.createSwapTransaction(tokenToTokenSwap);
-    console.log("✅ Token to Token swap built:", result1.isNativeSOLSwap ? "Native SOL" : "Regular");
+    // const tokenToSolSwap: SwapParams = {
+    //   fromTokenAmount: 50,
+    //   fromToken: {
+    //     address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    //     symbol: "USDC",
+    //     decimals: 6,
+    //     name: "USD Coin"
+    //   },
+    //   toToken: {
+    //     address: "So11111111111111111111111111111111111111112", // SOL
+    //     symbol: "SOL",
+    //     decimals: 9,
+    //     name: "Solana"
+    //   },
+    //   fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+    //   slippageTolerance: 0.5,
+    // };
+    // console.log("🔄 Building Token to Token swap...");
+    // const result1 = await sdk.createSwapTransaction(tokenToTokenSwap);
+    // console.log("✅ Token to Token swap built:", result1.isNativeSOLSwap ? "Native SOL" : "Regular");
     console.log("🔄 Building SOL to Token swap...");
     const result2 = await sdk.createSwapTransaction(solToTokenSwap);
     console.log("✅ SOL to Token swap built:", result2.isNativeSOLSwap ? "Native SOL" : "Regular");
-    console.log("🔄 Building Token to SOL swap...");
-    const result3 = await sdk.createSwapTransaction(tokenToSolSwap);
-    console.log("✅ Token to SOL swap built:", result3.isNativeSOLSwap ? "Native SOL" : "Regular");
+    // console.log("🔄 Building Token to SOL swap...");
+    // const result3 = await sdk.createSwapTransaction(tokenToSolSwap);
+    // console.log("✅ Token to SOL swap built:", result3.isNativeSOLSwap ? "Native SOL" : "Regular");
     console.log("🎉 Universal swap examples completed!");
 }
 // Example 19: Batch token swaps
@@ -755,7 +755,7 @@ async function swapTokensWithErrorHandling() {
 // swapTokensDualSigner();
 // swapTokensWithWallet(wallet);
 // swapTokensWithWalletAndAdmin(wallet);
-// universalSwapExample();
+universalSwapExample();
 // batchTokenSwaps();
 // swapTokensWithErrorHandling();
 //# sourceMappingURL=index.js.map

@@ -99,10 +99,10 @@ export interface SwapResult {
     explorerUrl?: string;
     error?: string;
 }
-export type SignWithKeypair = (transaction: Transaction, keypair: Keypair) => Promise<Transaction>;
-export type SignWithWalletAdapter = (transaction: Transaction, wallet: any) => Promise<Transaction>;
-export type SignWithDualKeypairs = (transaction: Transaction, senderKeypair: Keypair, feePayerKeypair?: Keypair) => Promise<Transaction>;
-export type SignWithWalletAndKeypair = (transaction: Transaction, wallet: Wallet, feePayerKeypair?: Keypair) => Promise<Transaction>;
+export type SignWithKeypair = (transaction: Transaction, keypair: Keypair, connection: Connection) => Promise<Transaction>;
+export type SignWithWalletAdapter = (transaction: Transaction, wallet: any, connection: Connection) => Promise<Transaction>;
+export type SignWithDualKeypairs = (transaction: Transaction, senderKeypair: Keypair, connection: Connection, feePayerKeypair?: Keypair) => Promise<Transaction>;
+export type SignWithWalletAndKeypair = (transaction: Transaction, wallet: Wallet, connection: Connection, feePayerKeypair?: Keypair) => Promise<Transaction>;
 export interface Wallet {
     publicKey: PublicKey;
     signTransaction: (transaction: Transaction) => Promise<Transaction>;

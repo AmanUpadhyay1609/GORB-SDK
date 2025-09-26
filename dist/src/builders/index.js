@@ -18,11 +18,6 @@ function calculateMetadataSpace(name, symbol, uri) {
     const tlv = 4;
     return Math.ceil((borshSize + tlv) * 1.1);
 }
-// Helper function to get recent blockhash
-async function getRecentBlockhash(connection) {
-    const { blockhash } = await connection.getLatestBlockhash();
-    return blockhash;
-}
 /**
  * Creates a token creation transaction without signing
  * @param connection - Solana connection
@@ -86,9 +81,7 @@ async function createTokenTransaction(connection, config, params, payer) {
         // 7. Mint the tokens
         const mintAmount = BigInt(supply) * BigInt(10 ** Number(decimals));
         transaction.add((0, spl_token_1.createMintToInstruction)(mint, associatedToken, payer, mintAmount, [], config.tokenProgram));
-        // Get recent blockhash and set up transaction
-        const blockhash = await getRecentBlockhash(connection);
-        transaction.recentBlockhash = blockhash;
+        // Set up transaction (blockhash will be added during signing)
         transaction.feePayer = payer;
         transaction.partialSign(mintKeypair); // Add mint keypair as signer
         return {
@@ -169,9 +162,7 @@ async function createNFTTransaction(connection, config, params, payer) {
         }
         // 7. Mint the NFT
         transaction.add((0, spl_token_1.createMintToInstruction)(mint, associatedToken, payer, BigInt(supply), [], config.tokenProgram));
-        // Get recent blockhash
-        const blockhash = await getRecentBlockhash(connection);
-        transaction.recentBlockhash = blockhash;
+        // Set up transaction (blockhash will be added during signing)
         transaction.feePayer = payer;
         transaction.partialSign(mintKeypair); // Add mint keypair as signer
         return {
@@ -193,7 +184,7 @@ async function createNFTTransaction(connection, config, params, payer) {
  * @param params - Transfer parameters
  * @returns Transfer transaction result
  */
-async function createNativeTransferTransaction(connection, _config, params) {
+async function createNativeTransferTransaction(_connection, _config, params) {
     try {
         const { fromPublicKey, toPublicKey, amountInSOL, feePayerPublicKey, } = params;
         // Validate amount
@@ -205,19 +196,15 @@ async function createNativeTransferTransaction(connection, _config, params) {
         const amountInLamports = Math.floor(amountInSOL * LAMPORTS_PER_SOL);
         // Determine fee payer (defaults to sender if not provided)
         const actualFeePayer = feePayerPublicKey || fromPublicKey;
-        // Get recent blockhash
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
         // Create transfer instruction
         const transferInstruction = web3_js_1.SystemProgram.transfer({
             fromPubkey: fromPublicKey,
             toPubkey: toPublicKey,
             lamports: amountInLamports,
         });
-        // Create transaction
+        // Create transaction (blockhash will be added during signing)
         const transaction = new web3_js_1.Transaction({
             feePayer: actualFeePayer,
-            blockhash,
-            lastValidBlockHeight,
         }).add(transferInstruction);
         return {
             transaction,
@@ -366,13 +353,9 @@ async function createSwapTransaction(connection, _config, params) {
             isFromSOL,
             isToSOL
         });
-        // Get recent blockhash
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-        // Create transaction
+        // Create transaction (blockhash will be added during signing)
         const transaction = new web3_js_1.Transaction({
             feePayer: actualFeePayer,
-            blockhash,
-            lastValidBlockHeight,
         });
         // Prepare accounts for Swap (matching Rust program order exactly)
         // Based on Rust: pool_info, token_a_info, token_b_info, vault_a_info, vault_b_info,
@@ -396,17 +379,18 @@ async function createSwapTransaction(connection, _config, params) {
         console.log("📝 Instruction data:", data.toString('hex'));
         console.log("📋 Account count:", accounts.length);
         console.log("📋 Accounts:", accounts.map((acc, i) => `${i}: ${acc.pubkey.toString()} (signer: ${acc.isSigner}, writable: ${acc.isWritable})`));
-        // Validate that we have the correct number of accounts
-        const expectedAccountCount = 12; // Based on Rust program + common accounts
-        if (accounts.length !== expectedAccountCount) {
-            throw new types_1.SDKError(`Invalid account count. Expected ${expectedAccountCount}, got ${accounts.length}`);
-        }
+        // // Validate that we have the correct number of accounts
+        // const expectedAccountCount = 12; // Based on Rust program + common accounts
+        // if (accounts.length !== expectedAccountCount) {
+        //   throw new SDKError(`Invalid account count. Expected ${expectedAccountCount}, got ${accounts.length}`);
+        // }
         // Add Swap instruction
         transaction.add({
             keys: accounts,
             programId: AMM_PROGRAM_ID,
             data,
         });
+        console.log(`🔄 Added Swap instruction to transaction-->${JSON.stringify(transaction.instructions, null, 2)}`);
         console.log("📤 Swap transaction prepared successfully");
         return {
             transaction,

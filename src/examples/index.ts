@@ -718,7 +718,7 @@ export async function universalSwapExample() {
       decimals: 7,
       name: "YH1"
     },
-    fromPublicKey: new PublicKey("F1d15ESiL2qhMotU2Uh4FNUnxexLSpJDpCYVWxaF8XtC"),
+    fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
     slippageTolerance: 0.5,
   };
 
@@ -879,6 +879,6 @@ export async function swapTokensWithErrorHandling() {
 // swapTokensDualSigner();
 // swapTokensWithWallet(wallet);
 // swapTokensWithWalletAndAdmin(wallet);
-universalSwapExample();
+// universalSwapExample();
 // batchTokenSwaps();
 // swapTokensWithErrorHandling();

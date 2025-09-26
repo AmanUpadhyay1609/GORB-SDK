@@ -2,6 +2,7 @@ import {
   Keypair,
   PublicKey,
   Transaction,
+  Connection,
 } from "@solana/web3.js";
 import {
   SignWithKeypair,
@@ -12,15 +13,30 @@ import {
   SigningError,
 } from "../types";
 
+// Helper function to get fresh blockhash
+async function getFreshBlockhash(connection: Connection): Promise<{ blockhash: string; lastValidBlockHeight: number }> {
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  return { blockhash, lastValidBlockHeight };
+}
+
 /**
  * Signs a transaction with a keypair
  * @param transaction - Transaction to sign
  * @param keypair - Keypair to sign with
+ * @param connection - Solana connection for fresh blockhash
  * @returns Signed transaction
  */
-export const signWithKeypair: SignWithKeypair = async (transaction: Transaction, keypair: Keypair): Promise<Transaction> => {
+export const signWithKeypair: SignWithKeypair = async (transaction: Transaction, keypair: Keypair, connection: Connection): Promise<Transaction> => {
   try {
     console.log(`inside signWithKeypair`);
+    
+    // Get fresh blockhash and lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await getFreshBlockhash(connection);
+    
+    // Set fresh blockhash on transaction
+    transaction.recentBlockhash = blockhash;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
+    
     transaction.partialSign(keypair);
     console.log(`transaction after partialSign: ${JSON.stringify(transaction)}`);
     return transaction;
@@ -33,13 +49,21 @@ export const signWithKeypair: SignWithKeypair = async (transaction: Transaction,
  * Signs a transaction with wallet adapter
  * @param transaction - Transaction to sign
  * @param wallet - Wallet adapter instance
+ * @param connection - Solana connection for fresh blockhash
  * @returns Signed transaction
  */
-export const signWithWalletAdapter: SignWithWalletAdapter = async (transaction: Transaction, wallet: Wallet): Promise<Transaction> => {
+export const signWithWalletAdapter: SignWithWalletAdapter = async (transaction: Transaction, wallet: Wallet, connection: Connection): Promise<Transaction> => {
   try {
     if (!wallet.signTransaction) {
       throw new SigningError("Wallet does not support signTransaction");
     }
+    
+    // Get fresh blockhash and lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await getFreshBlockhash(connection);
+    
+    // Set fresh blockhash on transaction
+    transaction.recentBlockhash = blockhash;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
     
     const signedTransaction = await wallet.signTransaction(transaction);
     return signedTransaction;
@@ -52,16 +76,27 @@ export const signWithWalletAdapter: SignWithWalletAdapter = async (transaction: 
  * Signs multiple transactions with wallet adapter
  * @param transactions - Array of transactions to sign
  * @param wallet - Wallet adapter instance
+ * @param connection - Solana connection for fresh blockhash
  * @returns Array of signed transactions
  */
 export async function signAllWithWalletAdapter(
   transactions: Transaction[],
-  wallet: Wallet
+  wallet: Wallet,
+  connection: Connection
 ): Promise<Transaction[]> {
   try {
     if (!wallet.signAllTransactions) {
       throw new SigningError("Wallet does not support signAllTransactions");
     }
+    
+    // Get fresh blockhash and lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await getFreshBlockhash(connection);
+    
+    // Set fresh blockhash on all transactions
+    transactions.forEach(transaction => {
+      transaction.recentBlockhash = blockhash;
+      transaction.lastValidBlockHeight = lastValidBlockHeight;
+    });
     
     const signedTransactions = await wallet.signAllTransactions(transactions);
     return signedTransactions;
@@ -75,16 +110,18 @@ export async function signAllWithWalletAdapter(
  * @param transaction - Transaction to sign
  * @param wallet - Wallet adapter instance
  * @param mintKeypair - Mint keypair for partial signing
+ * @param connection - Solana connection for fresh blockhash
  * @returns Signed transaction
  */
 export async function signWithWalletAndKeypair(
   transaction: Transaction,
   wallet: Wallet,
-  mintKeypair: Keypair
+  mintKeypair: Keypair,
+  connection: Connection
 ): Promise<Transaction> {
   try {
-    // First sign with wallet
-    const walletSignedTx = await signWithWalletAdapter(transaction, wallet);
+    // First sign with wallet (this will add fresh blockhash)
+    const walletSignedTx = await signWithWalletAdapter(transaction, wallet, connection);
     
     // Then partially sign with mint keypair
     walletSignedTx.partialSign(mintKeypair);
@@ -102,8 +139,8 @@ export async function signWithWalletAndKeypair(
  * @returns Combined signing function
  */
 export function createCombinedSigner(wallet: Wallet, mintKeypair: Keypair) {
-  return async (transaction: Transaction): Promise<Transaction> => {
-    return signWithWalletAndKeypair(transaction, wallet, mintKeypair);
+  return async (transaction: Transaction, connection: Connection): Promise<Transaction> => {
+    return signWithWalletAndKeypair(transaction, wallet, mintKeypair, connection);
   };
 }
 
@@ -138,18 +175,27 @@ export function validateKeypair(keypair: any): keypair is Keypair {
  * Signs a transaction with dual keypairs (sender and optional fee payer)
  * @param transaction - Transaction to sign
  * @param senderKeypair - Sender keypair (always required)
+ * @param connection - Solana connection for fresh blockhash
  * @param feePayerKeypair - Fee payer keypair (optional, defaults to sender)
  * @returns Signed transaction
  */
 export const signWithDualKeypairs: SignWithDualKeypairs = async (
   transaction: Transaction,
   senderKeypair: Keypair,
+  connection: Connection,
   feePayerKeypair?: Keypair
 ): Promise<Transaction> => {
   try {
     if (!validateKeypair(senderKeypair)) {
       throw new SigningError("Invalid sender keypair provided");
     }
+
+    // Get fresh blockhash and lastValidBlockHeight
+    const { blockhash, lastValidBlockHeight } = await getFreshBlockhash(connection);
+    
+    // Set fresh blockhash on transaction
+    transaction.recentBlockhash = blockhash;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
 
     // Always sign with sender keypair
     transaction.partialSign(senderKeypair);
@@ -172,12 +218,14 @@ export const signWithDualKeypairs: SignWithDualKeypairs = async (
  * Signs a transaction with wallet and optional fee payer keypair
  * @param transaction - Transaction to sign
  * @param wallet - Wallet adapter instance
+ * @param connection - Solana connection for fresh blockhash
  * @param feePayerKeypair - Fee payer keypair (optional)
  * @returns Signed transaction
  */
 export const signTransferWithWalletAndKeypair: SignWithWalletAndKeypair = async (
   transaction: Transaction,
   wallet: Wallet,
+  connection: Connection,
   feePayerKeypair?: Keypair
 ): Promise<Transaction> => {
   try {
@@ -185,8 +233,8 @@ export const signTransferWithWalletAndKeypair: SignWithWalletAndKeypair = async 
       throw new SigningError("Invalid wallet provided");
     }
 
-    // First sign with wallet
-    const walletSignedTx = await signWithWalletAdapter(transaction, wallet);
+    // First sign with wallet (this will add fresh blockhash)
+    const walletSignedTx = await signWithWalletAdapter(transaction, wallet, connection);
 
     // If fee payer keypair is provided and different from wallet, sign with it too
     if (feePayerKeypair && validateKeypair(feePayerKeypair)) {
@@ -209,8 +257,8 @@ export const signTransferWithWalletAndKeypair: SignWithWalletAndKeypair = async 
  * @returns Combined signing function
  */
 export function createTransferSigner(senderKeypair: Keypair, feePayerKeypair?: Keypair) {
-  return async (transaction: Transaction): Promise<Transaction> => {
-    return signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair);
+  return async (transaction: Transaction, connection: Connection): Promise<Transaction> => {
+    return signWithDualKeypairs(transaction, senderKeypair, connection, feePayerKeypair);
   };
 }
 
@@ -221,8 +269,8 @@ export function createTransferSigner(senderKeypair: Keypair, feePayerKeypair?: K
  * @returns Combined signing function
  */
 export function createTransferWalletSigner(wallet: Wallet, feePayerKeypair?: Keypair) {
-  return async (transaction: Transaction): Promise<Transaction> => {
-    return signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair);
+  return async (transaction: Transaction, connection: Connection): Promise<Transaction> => {
+    return signTransferWithWalletAndKeypair(transaction, wallet, connection, feePayerKeypair);
   };
 }
 
@@ -233,8 +281,8 @@ export function createTransferWalletSigner(wallet: Wallet, feePayerKeypair?: Key
  * @returns Combined signing function
  */
 export function createSwapSigner(senderKeypair: Keypair, feePayerKeypair?: Keypair) {
-  return async (transaction: Transaction): Promise<Transaction> => {
-    return signWithDualKeypairs(transaction, senderKeypair, feePayerKeypair);
+  return async (transaction: Transaction, connection: Connection): Promise<Transaction> => {
+    return signWithDualKeypairs(transaction, senderKeypair, connection, feePayerKeypair);
   };
 }
 
@@ -245,7 +293,7 @@ export function createSwapSigner(senderKeypair: Keypair, feePayerKeypair?: Keypa
  * @returns Combined signing function
  */
 export function createSwapWalletSigner(wallet: Wallet, feePayerKeypair?: Keypair) {
-  return async (transaction: Transaction): Promise<Transaction> => {
-    return signTransferWithWalletAndKeypair(transaction, wallet, feePayerKeypair);
+  return async (transaction: Transaction, connection: Connection): Promise<Transaction> => {
+    return signTransferWithWalletAndKeypair(transaction, wallet, connection, feePayerKeypair);
   };
 }

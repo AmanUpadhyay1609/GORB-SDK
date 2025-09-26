@@ -40,11 +40,6 @@ function calculateMetadataSpace(name: string, symbol: string, uri: string): numb
   return Math.ceil((borshSize + tlv) * 1.1);
 }
 
-// Helper function to get recent blockhash
-async function getRecentBlockhash(connection: Connection): Promise<string> {
-  const { blockhash } = await connection.getLatestBlockhash();
-  return blockhash;
-}
 
 /**
  * Creates a token creation transaction without signing
@@ -181,9 +176,7 @@ export async function createTokenTransaction(
       )
     );
 
-    // Get recent blockhash and set up transaction
-    const blockhash = await getRecentBlockhash(connection);
-    transaction.recentBlockhash = blockhash;
+    // Set up transaction (blockhash will be added during signing)
     transaction.feePayer = payer;
     transaction.partialSign(mintKeypair); // Add mint keypair as signer
 
@@ -334,9 +327,7 @@ export async function createNFTTransaction(
       )
     );
 
-    // Get recent blockhash
-    const blockhash = await getRecentBlockhash(connection);
-    transaction.recentBlockhash = blockhash;
+    // Set up transaction (blockhash will be added during signing)
     transaction.feePayer = payer;
     transaction.partialSign(mintKeypair); // Add mint keypair as signer
 
@@ -360,7 +351,7 @@ export async function createNFTTransaction(
  * @returns Transfer transaction result
  */
 export async function createNativeTransferTransaction(
-  connection: Connection,
+  _connection: Connection,
   _config: BlockchainConfig,
   params: TransferSOLParams
 ): Promise<TransferTransactionResult> {
@@ -384,9 +375,6 @@ export async function createNativeTransferTransaction(
     // Determine fee payer (defaults to sender if not provided)
     const actualFeePayer = feePayerPublicKey || fromPublicKey;
 
-    // Get recent blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
     // Create transfer instruction
     const transferInstruction = SystemProgram.transfer({
       fromPubkey: fromPublicKey,
@@ -394,11 +382,9 @@ export async function createNativeTransferTransaction(
       lamports: amountInLamports,
     });
 
-    // Create transaction
+    // Create transaction (blockhash will be added during signing)
     const transaction = new Transaction({
       feePayer: actualFeePayer,
-      blockhash,
-      lastValidBlockHeight,
     }).add(transferInstruction);
 
     return {
@@ -612,14 +598,9 @@ export async function createSwapTransaction(
       isToSOL
     });
 
-    // Get recent blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
-    // Create transaction
+    // Create transaction (blockhash will be added during signing)
     const transaction = new Transaction({
       feePayer: actualFeePayer,
-      blockhash,
-      lastValidBlockHeight,
     });
 
     // Prepare accounts for Swap (matching Rust program order exactly)
