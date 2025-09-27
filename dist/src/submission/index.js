@@ -15,6 +15,7 @@ const types_1 = require("../types");
  */
 async function submitTransaction(connection, transaction, options = {}) {
     try {
+        console.log("🚀 Submitting transaction...");
         const { skipPreflight = false, maxRetries = 3, commitment = "confirmed", } = options;
         // Serialize the transaction
         const serializedTransaction = transaction.serialize();

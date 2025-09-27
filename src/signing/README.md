@@ -9,6 +9,7 @@ The signing module provides functions to sign transactions using:
 - **Wallet Adapters**: Frontend wallet integration
 - **Dual Signers**: Sender + fee payer scenarios
 - **Combined Signing**: Wallet + keypair combinations
+- **Pool Creation**: Specialized signing for pool creation transactions
 
 ## Key Features
 
@@ -403,6 +404,21 @@ const signedTx = await signTransferWithWalletAndKeypair(transaction, wallet, con
 const signedTx = await signWithWalletAndKeypair(transaction, wallet, mintKeypair, connection);
 ```
 
+### 4. **Pool Creation Signing**
+```typescript
+// Single signer for pool creation
+const signedTx = await signWithDualKeypairs(poolTransaction, senderKeypair, connection);
+
+// Dual signer for pool creation with separate fee payer
+const signedTx = await signWithDualKeypairs(poolTransaction, senderKeypair, connection, feePayerKeypair);
+
+// Wallet adapter for pool creation
+const signedTx = await signTransferWithWalletAndKeypair(poolTransaction, wallet, connection);
+
+// Wallet + fee payer for pool creation
+const signedTx = await signTransferWithWalletAndKeypair(poolTransaction, wallet, connection, feePayerKeypair);
+```
+
 ## Error Handling
 
 All signing functions include comprehensive error handling:
@@ -473,14 +489,16 @@ const signedTx2 = await signer(transaction2, connection);
 
 ### With Builders Module
 ```typescript
-import { createSwapTransaction } from "../builders";
+import { createSwapTransaction, createPoolTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 
-// Build transaction
-const result = await createSwapTransaction(connection, config, params);
+// Build swap transaction
+const swapResult = await createSwapTransaction(connection, config, swapParams);
+const signedSwapTx = await signWithDualKeypairs(swapResult.transaction, senderKeypair, connection, feePayerKeypair);
 
-// Sign transaction
-const signedTx = await signWithDualKeypairs(result.transaction, senderKeypair, connection, feePayerKeypair);
+// Build pool creation transaction
+const poolResult = await createPoolTransaction(connection, config, poolParams, payer);
+const signedPoolTx = await signWithDualKeypairs(poolResult.transaction, senderKeypair, connection, feePayerKeypair);
 ```
 
 ### With Submission Module
@@ -497,18 +515,29 @@ const result = await submitTransaction(connection, signedTx);
 
 ### Complete Flow Example
 ```typescript
-import { createNativeTransferTransaction } from "../builders";
+import { createNativeTransferTransaction, createPoolTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 import { submitTransaction } from "../submission";
 
+// Example 1: Native Transfer
 // Step 1: Build transaction
-const result = await createNativeTransferTransaction(connection, config, params);
+const transferResult = await createNativeTransferTransaction(connection, config, transferParams);
 
 // Step 2: Sign transaction (adds fresh blockhash)
-const signedTx = await signWithDualKeypairs(result.transaction, senderKeypair, connection, feePayerKeypair);
+const signedTransferTx = await signWithDualKeypairs(transferResult.transaction, senderKeypair, connection, feePayerKeypair);
 
 // Step 3: Submit transaction
-const submitResult = await submitTransaction(connection, signedTx);
+const transferSubmitResult = await submitTransaction(connection, signedTransferTx);
+
+// Example 2: Pool Creation
+// Step 1: Build pool transaction
+const poolResult = await createPoolTransaction(connection, config, poolParams, payer);
+
+// Step 2: Sign pool transaction (adds fresh blockhash)
+const signedPoolTx = await signWithDualKeypairs(poolResult.transaction, senderKeypair, connection, feePayerKeypair);
+
+// Step 3: Submit pool transaction
+const poolSubmitResult = await submitTransaction(connection, signedPoolTx);
 ```
 
 ## Type Definitions

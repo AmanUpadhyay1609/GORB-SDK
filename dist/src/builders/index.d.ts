@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { CreateTokenParams, CreateNFTParams, TransactionResult, BlockchainConfig, TransferSOLParams, TransferTransactionResult, SwapParams, SwapTransactionResult } from "../types";
+import { CreateTokenParams, CreateNFTParams, TransactionResult, BlockchainConfig, TransferSOLParams, TransferTransactionResult, SwapParams, SwapTransactionResult, CreatePoolParams, CreatePoolTransactionResult } from "../types";
 /**
  * Creates a token creation transaction without signing
  * @param connection - Solana connection
@@ -34,4 +34,13 @@ export declare function createNativeTransferTransaction(_connection: Connection,
  * @returns Swap transaction result
  */
 export declare function createSwapTransaction(connection: Connection, _config: BlockchainConfig, params: SwapParams): Promise<SwapTransactionResult>;
+/**
+ * Creates a pool creation transaction without signing
+ * @param connection - Solana connection
+ * @param config - Blockchain configuration
+ * @param params - Pool creation parameters
+ * @param payer - The public key that will pay for the transaction
+ * @returns Pool creation transaction result
+ */
+export declare function createPoolTransaction(_connection: Connection, _config: BlockchainConfig, params: CreatePoolParams, _payer: PublicKey): Promise<CreatePoolTransactionResult>;
 //# sourceMappingURL=index.d.ts.map

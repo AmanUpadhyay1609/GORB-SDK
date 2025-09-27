@@ -13,6 +13,8 @@ import {
   TransferTransactionResult,
   SwapParams,
   SwapTransactionResult,
+  CreatePoolParams,
+  CreatePoolTransactionResult,
   Wallet,
   SDKConfig,
   SDKError,
@@ -27,6 +29,7 @@ import {
   createNFTTransaction,
   createNativeTransferTransaction,
   createSwapTransaction,
+  createPoolTransaction,
 } from "../builders";
 import {
   signWithKeypair,
@@ -98,6 +101,15 @@ export class SolanaSDK {
    */
   async createSwapTransaction(params: SwapParams): Promise<SwapTransactionResult> {
     return createSwapTransaction(this.connection, this.config, params);
+  }
+
+  /**
+   * Creates a pool creation transaction
+   * @param params - Pool creation parameters
+   * @returns Pool creation transaction result
+   */
+  async createPoolTransaction(params: CreatePoolParams): Promise<CreatePoolTransactionResult> {
+    return createPoolTransaction(this.connection, this.config, params, params.fromPublicKey);
   }
 
   /**

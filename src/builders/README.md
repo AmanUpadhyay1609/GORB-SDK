@@ -9,6 +9,7 @@ The builders module provides functions to create different types of transactions
 - **NFT Minting**: Create and mint NFTs
 - **Native SOL Transfers**: Transfer native SOL between accounts
 - **Token Swaps**: Universal token swapping functionality
+- **Pool Creation**: Create liquidity pools for AMM
 
 ## Key Features
 
@@ -215,6 +216,65 @@ console.log("Pool PDA:", result.poolPDA.toBase58());
 7. Creates swap instruction with proper accounts
 8. Builds transaction with swap instruction
 
+### 5. `createPoolTransaction()`
+
+Creates a liquidity pool creation transaction.
+
+```typescript
+async function createPoolTransaction(
+  connection: Connection,
+  config: BlockchainConfig,
+  params: CreatePoolParams,
+  payer: PublicKey
+): Promise<CreatePoolTransactionResult>
+```
+
+**Parameters:**
+- `connection`: Solana connection instance
+- `config`: Blockchain configuration (Gorbchain/Solana)
+- `params`: Pool creation parameters
+- `payer`: Public key that will pay for the transaction
+
+**Returns:**
+- `CreatePoolTransactionResult` containing the transaction and pool details
+
+**Example:**
+```typescript
+const params: CreatePoolParams = {
+  tokenA: {
+    address: "So11111111111111111111111111111111111111112", // SOL
+    symbol: "SOL",
+    decimals: 9,
+    name: "Solana"
+  },
+  tokenB: {
+    address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    symbol: "USDC",
+    decimals: 6,
+    name: "USD Coin"
+  },
+  amountA: 1.0, // 1 SOL
+  amountB: 100, // 100 USDC
+  fromPublicKey: new PublicKey("SenderPublicKey"),
+  feePayerPublicKey: new PublicKey("FeePayerPublicKey"), // Optional
+};
+
+const result = await createPoolTransaction(connection, config, params, payer);
+console.log("Pool PDA:", result.poolPDA.toBase58());
+console.log("LP Mint:", result.lpMintPDA.toBase58());
+console.log("Is Native SOL Pool:", result.isNativeSOLPool);
+```
+
+**What it does:**
+1. Validates pool creation parameters
+2. Determines if pool involves native SOL
+3. Ensures SOL is always tokenA for native pools
+4. Derives pool, LP mint, and vault PDAs
+5. Gets user token accounts
+6. Converts amounts to lamports
+7. Creates InitPool instruction with proper accounts
+8. Builds transaction with pool creation instruction
+
 ## Transaction Building Process
 
 ### 1. **Validation Phase**
@@ -386,6 +446,34 @@ interface SwapParams {
   fromPublicKey: PublicKey;
   feePayerPublicKey?: PublicKey;
   slippageTolerance?: number;
+}
+```
+
+### CreatePoolParams
+```typescript
+interface CreatePoolParams {
+  tokenA: TokenInfo;
+  tokenB: TokenInfo;
+  amountA: number;
+  amountB: number;
+  fromPublicKey: PublicKey;
+  feePayerPublicKey?: PublicKey;
+}
+```
+
+### CreatePoolTransactionResult
+```typescript
+interface CreatePoolTransactionResult {
+  transaction: Transaction;
+  poolPDA: PublicKey;
+  tokenA: PublicKey;
+  tokenB: PublicKey;
+  lpMintPDA: PublicKey;
+  vaultA: PublicKey;
+  vaultB: PublicKey;
+  isNativeSOLPool: boolean;
+  amountALamports: bigint;
+  amountBLamports: bigint;
 }
 ```
 

@@ -22,4 +22,11 @@ export declare function swapTokensWithWalletAndAdmin(wallet: any): Promise<void>
 export declare function universalSwapExample(): Promise<void>;
 export declare function batchTokenSwaps(): Promise<void>;
 export declare function swapTokensWithErrorHandling(): Promise<void>;
+export declare function createPoolSingleSigner(): Promise<void>;
+export declare function createPoolDualSigner(): Promise<void>;
+export declare function createPoolWithWallet(wallet: any): Promise<void>;
+export declare function createPoolWithWalletAndAdmin(wallet: any): Promise<void>;
+export declare function universalPoolCreationExample(): Promise<void>;
+export declare function batchPoolCreations(): Promise<void>;
+export declare function createPoolWithErrorHandling(): Promise<void>;
 //# sourceMappingURL=index.d.ts.map

@@ -10,6 +10,7 @@ The submission module provides functions to:
 - **Simulate Transactions**: Test transactions before submission
 - **Wait for Confirmation**: Monitor transaction status
 - **Get Transaction Details**: Retrieve transaction information
+- **Pool Creation Submission**: Specialized submission for pool creation transactions
 
 ## Key Features
 
@@ -403,18 +404,28 @@ if (result.success) {
 
 ### With Builders and Signing Modules
 ```typescript
-import { createSwapTransaction } from "../builders";
+import { createSwapTransaction, createPoolTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 import { submitTransaction, waitForConfirmation } from "../submission";
 
-// Complete flow
-const result = await createSwapTransaction(connection, config, params);
-const signedTx = await signWithDualKeypairs(result.transaction, senderKeypair, connection, feePayerKeypair);
-const submitResult = await submitTransaction(connection, signedTx);
+// Complete swap flow
+const swapResult = await createSwapTransaction(connection, config, swapParams);
+const signedSwapTx = await signWithDualKeypairs(swapResult.transaction, senderKeypair, connection, feePayerKeypair);
+const swapSubmitResult = await submitTransaction(connection, signedSwapTx);
 
-if (submitResult.success) {
-  const confirmation = await waitForConfirmation(connection, submitResult.signature);
+if (swapSubmitResult.success) {
+  const swapConfirmation = await waitForConfirmation(connection, swapSubmitResult.signature);
   console.log("Swap completed successfully!");
+}
+
+// Complete pool creation flow
+const poolResult = await createPoolTransaction(connection, config, poolParams, payer);
+const signedPoolTx = await signWithDualKeypairs(poolResult.transaction, senderKeypair, connection, feePayerKeypair);
+const poolSubmitResult = await submitTransaction(connection, signedPoolTx);
+
+if (poolSubmitResult.success) {
+  const poolConfirmation = await waitForConfirmation(connection, poolSubmitResult.signature);
+  console.log("Pool created successfully!");
 }
 ```
 

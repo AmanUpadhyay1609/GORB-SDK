@@ -33,7 +33,7 @@ const signWithKeypair = async (transaction, keypair, connection) => {
         transaction.recentBlockhash = blockhash;
         transaction.lastValidBlockHeight = lastValidBlockHeight;
         transaction.partialSign(keypair);
-        console.log(`transaction after partialSign: ${JSON.stringify(transaction)}`);
+        console.log(`transaction after partialSign: ${JSON.stringify(transaction.instructions[0])}`);
         return transaction;
     }
     catch (error) {

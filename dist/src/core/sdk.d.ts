@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { BlockchainConfig, CreateTokenParams, CreateNFTParams, TransactionResult, TransferSOLParams, TransferTransactionResult, SwapParams, SwapTransactionResult, Wallet, SDKConfig } from "../types";
+import { BlockchainConfig, CreateTokenParams, CreateNFTParams, TransactionResult, TransferSOLParams, TransferTransactionResult, SwapParams, SwapTransactionResult, CreatePoolParams, CreatePoolTransactionResult, Wallet, SDKConfig } from "../types";
 /**
  * Main SDK class for Solana-based blockchain operations
  */
@@ -33,6 +33,12 @@ export declare class SolanaSDK {
      * @returns Swap transaction result
      */
     createSwapTransaction(params: SwapParams): Promise<SwapTransactionResult>;
+    /**
+     * Creates a pool creation transaction
+     * @param params - Pool creation parameters
+     * @returns Pool creation transaction result
+     */
+    createPoolTransaction(params: CreatePoolParams): Promise<CreatePoolTransactionResult>;
     /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign

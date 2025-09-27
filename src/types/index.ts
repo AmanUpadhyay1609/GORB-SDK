@@ -128,6 +128,45 @@ export interface SwapResult {
   error?: string;
 }
 
+// Pool creation parameters
+export interface CreatePoolParams {
+  tokenA: TokenInfo;
+  tokenB: TokenInfo;
+  amountA: number;
+  amountB: number;
+  fromPublicKey: PublicKey;
+  feePayerPublicKey?: PublicKey;
+}
+
+// Pool creation transaction result
+export interface CreatePoolTransactionResult {
+  transaction: Transaction;
+  poolPDA: PublicKey;
+  tokenA: PublicKey;
+  tokenB: PublicKey;
+  lpMintPDA: PublicKey;
+  vaultA: PublicKey;
+  vaultB: PublicKey;
+  isNativeSOLPool: boolean;
+  amountALamports: bigint;
+  amountBLamports: bigint;
+}
+
+// Pool creation result
+export interface CreatePoolResult {
+  success: boolean;
+  signature?: TransactionSignature;
+  poolInfo?: {
+    poolPDA: string;
+    tokenA: string;
+    tokenB: string;
+    lpMint: string;
+    vaultA: string;
+    vaultB: string;
+  };
+  error?: string;
+}
+
 // Signing function types
 export type SignWithKeypair = (transaction: Transaction, keypair: Keypair, connection: Connection) => Promise<Transaction>;
 export type SignWithWalletAdapter = (transaction: Transaction, wallet: any, connection: Connection) => Promise<Transaction>;

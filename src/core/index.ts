@@ -17,6 +17,9 @@ export type {
   SwapParams,
   SwapTransactionResult,
   SwapResult,
+  CreatePoolParams,
+  CreatePoolTransactionResult,
+  CreatePoolResult,
   Wallet,
   SDKConfig,
   SubmitOptions,
@@ -48,6 +51,7 @@ export {
   createNFTTransaction,
   createNativeTransferTransaction,
   createSwapTransaction,
+  createPoolTransaction,
 } from "../builders";
 
 // Signing utility exports

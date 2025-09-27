@@ -56,6 +56,14 @@ class SolanaSDK {
         return (0, builders_1.createSwapTransaction)(this.connection, this.config, params);
     }
     /**
+     * Creates a pool creation transaction
+     * @param params - Pool creation parameters
+     * @returns Pool creation transaction result
+     */
+    async createPoolTransaction(params) {
+        return (0, builders_1.createPoolTransaction)(this.connection, this.config, params, params.fromPublicKey);
+    }
+    /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign
      * @param keypair - Keypair to sign with
