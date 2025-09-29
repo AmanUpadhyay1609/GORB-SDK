@@ -14,6 +14,8 @@ import {
   TokenInfo,
   SwapParams,
   CreatePoolParams,
+  AddLiquidityParams,
+  Pool,
 } from "../core";
 import bs58 from "bs58";
 
@@ -1216,6 +1218,399 @@ export async function createPoolWithErrorHandling() {
   console.log("✅ Error handling tests completed!");
 }
 
+// ============================================================================
+// ADD LIQUIDITY EXAMPLES
+// ============================================================================
+
+// Example 27: Add liquidity with single signer (sender pays fees)
+export async function addLiquiditySingleSigner() {
+  const sdk = createGorbchainSDK();
+  
+  const pool: Pool = {
+    address: "PoolAddressHere", // Replace with actual pool address
+    tokenA: {
+      address: "So11111111111111111111111111111111111111112", // SOL
+      symbol: "SOL",
+      decimals: 9,
+      name: "Solana"
+    },
+    tokenB: {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      symbol: "USDC",
+      decimals: 6,
+      name: "USD Coin"
+    }
+  };
+
+  const addLiquidityParams: AddLiquidityParams = {
+    pool,
+    amountA: 1.0, // 1 SOL
+    amountB: 100, // 100 USDC
+    fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+    // feePayerPublicKey not provided - sender pays fees
+  };
+
+  try {
+    // Build transaction
+    const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+    console.log("✅ Add liquidity transaction created");
+    console.log("📝 Add liquidity details:", {
+      poolPDA: result.poolPDA.toBase58(),
+      tokenA: result.tokenA.toBase58(),
+      tokenB: result.tokenB.toBase58(),
+      lpMint: result.lpMintPDA.toBase58(),
+      isNativeSOLPool: result.isNativeSOLPool,
+      userTokenA: result.userTokenA.toBase58(),
+      userTokenB: result.userTokenB.toBase58(),
+      userLP: result.userLP.toBase58(),
+    });
+
+    // Sign transaction (adds fresh blockhash)
+    const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+    const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+    console.log("✅ Add liquidity transaction signed");
+    console.log("📝 Transaction after signing:");
+    console.log("  - recentBlockhash:", signedTx.recentBlockhash);
+    console.log("  - lastValidBlockHeight:", signedTx.lastValidBlockHeight);
+    console.log("  - signatures count:", signedTx.signatures.length);
+
+    // Submit transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    if (submitResult.success) {
+      console.log("✅ Liquidity added successfully:", submitResult.signature);
+    } else {
+      console.error("❌ Add liquidity failed:", submitResult.error);
+    }
+  } catch (error: any) {
+    console.error("❌ Error:", error.message);
+  }
+}
+
+// Example 28: Add liquidity with dual signer (admin pays fees)
+export async function addLiquidityDualSigner() {
+  const sdk = createGorbchainSDK();
+  
+  const pool: Pool = {
+    address: "PoolAddressHere", // Replace with actual pool address
+    tokenA: {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      symbol: "USDC",
+      decimals: 6,
+      name: "USD Coin"
+    },
+    tokenB: {
+      address: "4eCdoBMvbUSYZBfvXwqTd7eg9fzzWzQAd54xYFoB8eKf", // Custom token
+      symbol: "YH!@",
+      decimals: 7,
+      name: "YH1"
+    }
+  };
+
+  const addLiquidityParams: AddLiquidityParams = {
+    pool,
+    amountA: 50, // 50 USDC
+    amountB: 1000, // 1000 YH!@
+    fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+    feePayerPublicKey: new PublicKey("AdminPublicKey"), // Admin pays fees
+  };
+
+  try {
+    // Build transaction
+    const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+    console.log("✅ Add liquidity transaction created");
+
+    // Sign transaction with dual signers
+    const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+    const adminKeypair = Keypair.generate(); // Replace with your actual admin keypair
+    const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair, adminKeypair);
+    console.log("✅ Add liquidity transaction signed with dual signers");
+
+    // Submit transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    if (submitResult.success) {
+      console.log("✅ Liquidity added successfully:", submitResult.signature);
+    } else {
+      console.error("❌ Add liquidity failed:", submitResult.error);
+    }
+  } catch (error: any) {
+    console.error("❌ Error:", error.message);
+  }
+}
+
+// Example 29: Add liquidity with wallet adapter
+export async function addLiquidityWithWallet(wallet: any) {
+  const sdk = createGorbchainSDK();
+  
+  const pool: Pool = {
+    address: "PoolAddressHere", // Replace with actual pool address
+    tokenA: {
+      address: "So11111111111111111111111111111111111111112", // SOL
+      symbol: "SOL",
+      decimals: 9,
+      name: "Solana"
+    },
+    tokenB: {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      symbol: "USDC",
+      decimals: 6,
+      name: "USD Coin"
+    }
+  };
+
+  const addLiquidityParams: AddLiquidityParams = {
+    pool,
+    amountA: 2.0, // 2 SOL
+    amountB: 200, // 200 USDC
+    fromPublicKey: wallet.publicKey,
+  };
+
+  try {
+    // Build transaction
+    const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+    console.log("✅ Add liquidity transaction created");
+
+    // Sign transaction with wallet
+    const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet);
+    console.log("✅ Add liquidity transaction signed with wallet");
+
+    // Simulate before submitting
+    const simulation = await sdk.simulateTransaction(signedTx);
+    if (!simulation.success) {
+      throw new Error(`Simulation failed: ${simulation.error}`);
+    }
+
+    // Submit transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    if (submitResult.success) {
+      console.log("✅ Liquidity added successfully:", submitResult.signature);
+    } else {
+      console.error("❌ Add liquidity failed:", submitResult.error);
+    }
+  } catch (error: any) {
+    console.error("❌ Error:", error.message);
+  }
+}
+
+// Example 30: Add liquidity with wallet and admin fee payer
+export async function addLiquidityWithWalletAndAdmin(wallet: any) {
+  const sdk = createGorbchainSDK();
+  
+  const pool: Pool = {
+    address: "PoolAddressHere", // Replace with actual pool address
+    tokenA: {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      symbol: "USDC",
+      decimals: 6,
+      name: "USD Coin"
+    },
+    tokenB: {
+      address: "4eCdoBMvbUSYZBfvXwqTd7eg9fzzWzQAd54xYFoB8eKf", // Custom token
+      symbol: "YH!@",
+      decimals: 7,
+      name: "YH1"
+    }
+  };
+
+  const addLiquidityParams: AddLiquidityParams = {
+    pool,
+    amountA: 75, // 75 USDC
+    amountB: 1500, // 1500 YH!@
+    fromPublicKey: wallet.publicKey,
+    feePayerPublicKey: new PublicKey("AdminPublicKey"), // Admin pays fees
+  };
+
+  try {
+    // Build transaction
+    const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+    console.log("✅ Add liquidity transaction created");
+
+    // Sign transaction with wallet and admin
+    const adminKeypair = Keypair.generate(); // Replace with your actual admin keypair
+    const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet, adminKeypair);
+    console.log("✅ Add liquidity transaction signed with wallet and admin");
+
+    // Submit transaction
+    const submitResult = await sdk.submitTransaction(signedTx);
+    if (submitResult.success) {
+      console.log("✅ Liquidity added successfully:", submitResult.signature);
+    } else {
+      console.error("❌ Add liquidity failed:", submitResult.error);
+    }
+  } catch (error: any) {
+    console.error("❌ Error:", error.message);
+  }
+}
+
+// Example 31: Universal add liquidity example
+export async function universalAddLiquidityExample() {
+  const sdk = createGorbchainSDK();
+
+  // SOL to Token pool
+  const pool: Pool = {
+    address: "PoolAddressHere", // Replace with actual pool address
+    tokenA: {
+      address: "So11111111111111111111111111111111111111112", // SOL
+      symbol: "SOL",
+      decimals: 9,
+      name: "Solana"
+    },
+    tokenB: {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+      symbol: "USDC",
+      decimals: 6,
+      name: "USD Coin"
+    }
+  };
+
+  const addLiquidityParams: AddLiquidityParams = {
+    pool,
+    amountA: 1.5, // 1.5 SOL
+    amountB: 150, // 150 USDC
+    fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+  };
+
+  console.log("🔄 Building add liquidity transaction...");
+  const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+  console.log("✅ Add liquidity transaction built:", result.isNativeSOLPool ? "Native SOL" : "Regular");
+
+  // Example of signing the add liquidity transaction
+  // You can use any of these signing methods:
+
+  // Method 1: Single signer (sender pays fees)
+  // const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+  // const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+
+  // Method 2: Dual signer (separate fee payer)
+  // const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+  // const feePayerKeypair = Keypair.generate(); // Replace with your actual fee payer keypair
+  // const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair, feePayerKeypair);
+
+  // Method 3: With wallet adapter
+  // const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet);
+
+  // Method 4: With wallet and separate fee payer
+  // const feePayerKeypair = Keypair.generate(); // Replace with your actual fee payer keypair
+  // const signedTx = await sdk.signTransferWithWalletAndKeypair(result.transaction, wallet, feePayerKeypair);
+
+  console.log("🎉 Universal add liquidity examples completed!");
+}
+
+// Example 32: Batch add liquidity
+export async function batchAddLiquidity() {
+  const sdk = createGorbchainSDK();
+  
+  const pools = [
+    {
+      pool: {
+        address: "PoolAddress1", // Replace with actual pool address
+        tokenA: { address: "So11111111111111111111111111111111111111112", symbol: "SOL", decimals: 9, name: "Solana" },
+        tokenB: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC", decimals: 6, name: "USD Coin" },
+      },
+      amountA: 1.0,
+      amountB: 100,
+    },
+    {
+      pool: {
+        address: "PoolAddress2", // Replace with actual pool address
+        tokenA: { address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", symbol: "USDC", decimals: 6, name: "USD Coin" },
+        tokenB: { address: "4eCdoBMvbUSYZBfvXwqTd7eg9fzzWzQAd54xYFoB8eKf", symbol: "YH!@", decimals: 7, name: "YH1" },
+      },
+      amountA: 50,
+      amountB: 1000,
+    },
+  ];
+
+  const results = [];
+  for (const { pool, amountA, amountB } of pools) {
+    const addLiquidityParams: AddLiquidityParams = {
+      pool,
+      amountA,
+      amountB,
+      fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+    };
+
+    try {
+      const result = await sdk.createAddLiquidityTransaction(addLiquidityParams);
+      const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+      const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
+      const submitResult = await sdk.submitTransaction(signedTx);
+      results.push(submitResult);
+    } catch (error: any) {
+      console.error("Add liquidity failed:", error.message);
+      results.push({ success: false, error: error.message });
+    }
+  }
+
+  console.log("✅ Batch add liquidity completed!");
+}
+
+// Example 33: Add liquidity with error handling
+export async function addLiquidityWithErrorHandling() {
+  const sdk = createGorbchainSDK();
+
+  try {
+    // Test with invalid amounts
+    const invalidPool: Pool = {
+      address: "PoolAddressHere", // Replace with actual pool address
+      tokenA: {
+        address: "So11111111111111111111111111111111111111112",
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+      },
+      tokenB: {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+      }
+    };
+
+    const invalidAddLiquidityParams: AddLiquidityParams = {
+      pool: invalidPool,
+      amountA: -10, // Invalid negative amount
+      amountB: 100,
+      fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+    };
+
+    await sdk.createAddLiquidityTransaction(invalidAddLiquidityParams);
+  } catch (error: any) {
+    console.error("Expected error for invalid amounts:", error.message);
+  }
+
+  try {
+    // Test with invalid pool address
+    const invalidPool: Pool = {
+      address: "", // Invalid empty address
+      tokenA: {
+        address: "So11111111111111111111111111111111111111112",
+        symbol: "SOL",
+        decimals: 9,
+        name: "Solana"
+      },
+      tokenB: {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        symbol: "USDC",
+        decimals: 6,
+        name: "USD Coin"
+      }
+    };
+
+    const invalidAddLiquidityParams: AddLiquidityParams = {
+      pool: invalidPool,
+      amountA: 1.0,
+      amountB: 100,
+      fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
+    };
+
+    await sdk.createAddLiquidityTransaction(invalidAddLiquidityParams);
+  } catch (error: any) {
+    console.error("Expected error for invalid pool address:", error.message);
+  }
+
+  console.log("✅ Error handling tests completed!");
+}
+
 // uncomment the function you want to run
 // createTokenOnGorbchain();
 // createNFTOnGorbchain();
@@ -1241,3 +1636,12 @@ universalSwapExample();
 // universalPoolCreationExample();
 // batchPoolCreations();
 // createPoolWithErrorHandling();
+
+// Add liquidity examples
+// addLiquiditySingleSigner();
+// addLiquidityDualSigner();
+// addLiquidityWithWallet(wallet);
+// addLiquidityWithWalletAndAdmin(wallet);
+// universalAddLiquidityExample();
+// batchAddLiquidity();
+// addLiquidityWithErrorHandling();

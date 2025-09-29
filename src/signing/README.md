@@ -10,6 +10,7 @@ The signing module provides functions to sign transactions using:
 - **Dual Signers**: Sender + fee payer scenarios
 - **Combined Signing**: Wallet + keypair combinations
 - **Pool Creation**: Specialized signing for pool creation transactions
+- **Add Liquidity**: Specialized signing for add liquidity transactions
 
 ## Key Features
 
@@ -419,6 +420,21 @@ const signedTx = await signTransferWithWalletAndKeypair(poolTransaction, wallet,
 const signedTx = await signTransferWithWalletAndKeypair(poolTransaction, wallet, connection, feePayerKeypair);
 ```
 
+### 5. **Add Liquidity Signing**
+```typescript
+// Single signer for add liquidity
+const signedTx = await signWithDualKeypairs(addLiquidityTransaction, senderKeypair, connection);
+
+// Dual signer for add liquidity with separate fee payer
+const signedTx = await signWithDualKeypairs(addLiquidityTransaction, senderKeypair, connection, feePayerKeypair);
+
+// Wallet adapter for add liquidity
+const signedTx = await signTransferWithWalletAndKeypair(addLiquidityTransaction, wallet, connection);
+
+// Wallet + fee payer for add liquidity
+const signedTx = await signTransferWithWalletAndKeypair(addLiquidityTransaction, wallet, connection, feePayerKeypair);
+```
+
 ## Error Handling
 
 All signing functions include comprehensive error handling:
@@ -489,7 +505,7 @@ const signedTx2 = await signer(transaction2, connection);
 
 ### With Builders Module
 ```typescript
-import { createSwapTransaction, createPoolTransaction } from "../builders";
+import { createSwapTransaction, createPoolTransaction, createAddLiquidityTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 
 // Build swap transaction
@@ -499,6 +515,10 @@ const signedSwapTx = await signWithDualKeypairs(swapResult.transaction, senderKe
 // Build pool creation transaction
 const poolResult = await createPoolTransaction(connection, config, poolParams, payer);
 const signedPoolTx = await signWithDualKeypairs(poolResult.transaction, senderKeypair, connection, feePayerKeypair);
+
+// Build add liquidity transaction
+const addLiquidityResult = await createAddLiquidityTransaction(connection, config, addLiquidityParams, payer);
+const signedAddLiquidityTx = await signWithDualKeypairs(addLiquidityResult.transaction, senderKeypair, connection, feePayerKeypair);
 ```
 
 ### With Submission Module
@@ -515,7 +535,7 @@ const result = await submitTransaction(connection, signedTx);
 
 ### Complete Flow Example
 ```typescript
-import { createNativeTransferTransaction, createPoolTransaction } from "../builders";
+import { createNativeTransferTransaction, createPoolTransaction, createAddLiquidityTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 import { submitTransaction } from "../submission";
 
@@ -538,6 +558,16 @@ const signedPoolTx = await signWithDualKeypairs(poolResult.transaction, senderKe
 
 // Step 3: Submit pool transaction
 const poolSubmitResult = await submitTransaction(connection, signedPoolTx);
+
+// Example 3: Add Liquidity
+// Step 1: Build add liquidity transaction
+const addLiquidityResult = await createAddLiquidityTransaction(connection, config, addLiquidityParams, payer);
+
+// Step 2: Sign add liquidity transaction (adds fresh blockhash)
+const signedAddLiquidityTx = await signWithDualKeypairs(addLiquidityResult.transaction, senderKeypair, connection, feePayerKeypair);
+
+// Step 3: Submit add liquidity transaction
+const addLiquiditySubmitResult = await submitTransaction(connection, signedAddLiquidityTx);
 ```
 
 ## Type Definitions

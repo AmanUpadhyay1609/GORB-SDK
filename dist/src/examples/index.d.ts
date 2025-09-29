@@ -1,32 +1,18 @@
 /**
- * Example usage of the Solana SDK
- * This file demonstrates how to use the SDK for different scenarios
+ * Main Examples Index
+ * This file provides easy access to all example functions organized by functionality
  */
-export declare function createTokenOnGorbchain(): Promise<void>;
-export declare function createNFTOnGorbchain(): Promise<void>;
-export declare function createTokenOnCustomBlockchain(): Promise<void>;
-export declare function completeTokenCreationWithWallet(wallet: any): Promise<void>;
-export declare function createMultipleTokens(): Promise<import("../types").TransactionResult[]>;
-export declare function createTokenWithErrorHandling(): Promise<void>;
-export declare function demonstrateGORBObject(): void;
-export declare function transferSOLSingleSigner(): Promise<void>;
-export declare function transferSOLDualSigner(): Promise<void>;
-export declare function transferSOLWithWallet(wallet: any): Promise<void>;
-export declare function transferSOLWithWalletAndAdmin(wallet: any): Promise<void>;
-export declare function batchNativeTransfers(): Promise<void>;
-export declare function transferSOLWithErrorHandling(): Promise<void>;
-export declare function swapTokensSingleSigner(): Promise<void>;
-export declare function swapTokensDualSigner(): Promise<void>;
-export declare function swapTokensWithWallet(wallet: any): Promise<void>;
-export declare function swapTokensWithWalletAndAdmin(wallet: any): Promise<void>;
-export declare function universalSwapExample(): Promise<void>;
-export declare function batchTokenSwaps(): Promise<void>;
-export declare function swapTokensWithErrorHandling(): Promise<void>;
-export declare function createPoolSingleSigner(): Promise<void>;
-export declare function createPoolDualSigner(): Promise<void>;
-export declare function createPoolWithWallet(wallet: any): Promise<void>;
-export declare function createPoolWithWalletAndAdmin(wallet: any): Promise<void>;
-export declare function universalPoolCreationExample(): Promise<void>;
-export declare function batchPoolCreations(): Promise<void>;
-export declare function createPoolWithErrorHandling(): Promise<void>;
+export * from './tests/tokenCreation.test';
+export * from './tests/nftCreation.test';
+export * from './tests/nativeTransfer.test';
+export * from './tests/swap.test';
+export * from './tests/poolCreation.test';
+export * from './tests/addLiquidity.test';
+export { createGorbchainSDK, createSolanaSDK, createSDK, createBlockchainConfig, Keypair, PublicKey, GORB, } from "../core";
+export type { TokenInfo, SwapParams, CreatePoolParams, AddLiquidityParams, Pool, DetailedPoolInfo, } from "../core";
+export declare const EXAMPLE_USAGE_GUIDE = "\n# GORB Chain SDK Examples\n\nThis module contains comprehensive examples for all SDK functionality, organized into separate test files:\n\n## \uD83D\uDCC1 File Structure\n\n- **tokenCreation.test.ts** - Token creation examples\n- **nftCreation.test.ts** - NFT creation examples  \n- **nativeTransfer.test.ts** - Native SOL transfer examples\n- **swap.test.ts** - Token swap examples\n- **poolCreation.test.ts** - Pool creation examples\n- **addLiquidity.test.ts** - Add liquidity examples\n\n## \uD83D\uDE80 Quick Start\n\n1. Import the examples you need:\n   ```typescript\n   import { createTokenOnGorbchain, createNFTOnGorbchain } from './examples';\n   ```\n\n2. Or import from specific test files:\n   ```typescript\n   import { createTokenOnGorbchain } from './examples/tests/tokenCreation.test';\n   ```\n\n3. Run the examples:\n   ```typescript\n   // Uncomment the function you want to run in the respective test file\n   createTokenOnGorbchain();\n   ```\n\n## \uD83D\uDCDA Available Examples\n\n### Token Creation\n- createTokenOnGorbchain()\n- createTokenOnCustomBlockchain()\n- completeTokenCreationWithWallet()\n- createMultipleTokens()\n- createTokenWithErrorHandling()\n- demonstrateGORBObject()\n\n### NFT Creation\n- createNFTOnGorbchain()\n- createNFTWithWallet()\n- createMultipleNFTs()\n- createNFTWithErrorHandling()\n- createNFTCustomMetadata()\n- createNFTWithFreezeAuthority()\n\n### Native Transfers\n- transferSOLSingleSigner()\n- transferSOLDualSigner()\n- transferSOLWithWallet()\n- transferSOLWithWalletAndAdmin()\n- batchNativeTransfers()\n- transferSOLWithErrorHandling()\n- highValueTransfer()\n\n### Token Swaps\n- swapTokensSingleSigner()\n- swapTokensDualSigner()\n- swapTokensWithWallet()\n- swapTokensWithWalletAndAdmin()\n- universalSwapExample()\n- batchTokenSwaps()\n- swapTokensWithErrorHandling()\n- highValueSwapWithSlippage()\n\n### Pool Creation\n- createPoolSingleSigner()\n- createPoolDualSigner()\n- createPoolWithWallet()\n- createPoolWithWalletAndAdmin()\n- universalPoolCreationExample()\n- batchPoolCreations()\n- createPoolWithErrorHandling()\n- createPoolWithCustomFees()\n- createMultipleTokenPairPools()\n\n### Add Liquidity\n- addLiquiditySingleSigner()\n- addLiquidityDualSigner()\n- addLiquidityWithWallet()\n- addLiquidityWithWalletAndAdmin()\n- universalAddLiquidityExample()\n- batchAddLiquidity()\n- addLiquidityWithErrorHandling()\n- addLiquidityWithDetailedPoolInfo()\n- highValueAddLiquidity()\n\n## \uD83D\uDD27 Configuration\n\nAll examples use placeholder values that need to be replaced with actual values:\n\n- Replace \"your public key\" with actual public keys\n- Replace \"your private key\" with actual private keys\n- Replace \"PoolAddressHere\" with actual pool addresses\n- Replace \"AdminPublicKey\" with actual admin public keys\n\n## \uD83D\uDCD6 Documentation\n\nFor detailed documentation on each functionality, see:\n- NATIVE_TRANSFER_GUIDE.md\n- SWAP_GUIDE.md\n- POOL_CREATION_GUIDE.md\n- ADD_LIQUIDITY_GUIDE.md\n- BLOCKHASH_OPTIMIZATION_GUIDE.md\n\n## \uD83C\uDFAF Best Practices\n\n1. **Always simulate transactions** before submitting\n2. **Use appropriate commitment levels** for different transaction types\n3. **Handle errors gracefully** with try-catch blocks\n4. **Validate inputs** before creating transactions\n5. **Use fresh blockhashes** for better transaction success rates\n6. **Test with small amounts** before high-value operations\n";
+declare const _default: {
+    EXAMPLE_USAGE_GUIDE: string;
+};
+export default _default;
 //# sourceMappingURL=index.d.ts.map

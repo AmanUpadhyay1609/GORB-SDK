@@ -11,6 +11,7 @@ The submission module provides functions to:
 - **Wait for Confirmation**: Monitor transaction status
 - **Get Transaction Details**: Retrieve transaction information
 - **Pool Creation Submission**: Specialized submission for pool creation transactions
+- **Add Liquidity Submission**: Specialized submission for add liquidity transactions
 
 ## Key Features
 
@@ -404,7 +405,7 @@ if (result.success) {
 
 ### With Builders and Signing Modules
 ```typescript
-import { createSwapTransaction, createPoolTransaction } from "../builders";
+import { createSwapTransaction, createPoolTransaction, createAddLiquidityTransaction } from "../builders";
 import { signWithDualKeypairs } from "../signing";
 import { submitTransaction, waitForConfirmation } from "../submission";
 
@@ -426,6 +427,16 @@ const poolSubmitResult = await submitTransaction(connection, signedPoolTx);
 if (poolSubmitResult.success) {
   const poolConfirmation = await waitForConfirmation(connection, poolSubmitResult.signature);
   console.log("Pool created successfully!");
+}
+
+// Complete add liquidity flow
+const addLiquidityResult = await createAddLiquidityTransaction(connection, config, addLiquidityParams, payer);
+const signedAddLiquidityTx = await signWithDualKeypairs(addLiquidityResult.transaction, senderKeypair, connection, feePayerKeypair);
+const addLiquiditySubmitResult = await submitTransaction(connection, signedAddLiquidityTx);
+
+if (addLiquiditySubmitResult.success) {
+  const addLiquidityConfirmation = await waitForConfirmation(connection, addLiquiditySubmitResult.signature);
+  console.log("Liquidity added successfully!");
 }
 ```
 

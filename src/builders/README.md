@@ -10,6 +10,7 @@ The builders module provides functions to create different types of transactions
 - **Native SOL Transfers**: Transfer native SOL between accounts
 - **Token Swaps**: Universal token swapping functionality
 - **Pool Creation**: Create liquidity pools for AMM
+- **Add Liquidity**: Add liquidity to existing pools
 
 ## Key Features
 
@@ -275,6 +276,71 @@ console.log("Is Native SOL Pool:", result.isNativeSOLPool);
 7. Creates InitPool instruction with proper accounts
 8. Builds transaction with pool creation instruction
 
+### 6. `createAddLiquidityTransaction()`
+
+Creates an add liquidity transaction for existing pools.
+
+```typescript
+async function createAddLiquidityTransaction(
+  connection: Connection,
+  config: BlockchainConfig,
+  params: AddLiquidityParams,
+  payer: PublicKey
+): Promise<AddLiquidityTransactionResult>
+```
+
+**Parameters:**
+- `connection`: Solana connection instance
+- `config`: Blockchain configuration (Gorbchain/Solana)
+- `params`: Add liquidity parameters
+- `payer`: Public key that will pay for the transaction
+
+**Returns:**
+- `AddLiquidityTransactionResult` containing the transaction and liquidity details
+
+**Example:**
+```typescript
+const pool: Pool = {
+  address: "PoolAddressHere", // Replace with actual pool address
+  tokenA: {
+    address: "So11111111111111111111111111111111111111112", // SOL
+    symbol: "SOL",
+    decimals: 9,
+    name: "Solana"
+  },
+  tokenB: {
+    address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
+    symbol: "USDC",
+    decimals: 6,
+    name: "USD Coin"
+  }
+};
+
+const params: AddLiquidityParams = {
+  pool,
+  amountA: 1.0, // 1 SOL
+  amountB: 100, // 100 USDC
+  fromPublicKey: new PublicKey("SenderPublicKey"),
+  feePayerPublicKey: new PublicKey("FeePayerPublicKey"), // Optional
+};
+
+const result = await createAddLiquidityTransaction(connection, config, params, payer);
+console.log("Pool PDA:", result.poolPDA.toBase58());
+console.log("LP Mint:", result.lpMintPDA.toBase58());
+console.log("Is Native SOL Pool:", result.isNativeSOLPool);
+```
+
+**What it does:**
+1. Validates add liquidity parameters
+2. Handles both Pool and DetailedPoolInfo types
+3. Determines if pool involves native SOL
+4. Ensures SOL is always tokenA for native pools
+5. Derives pool, LP mint, and vault PDAs
+6. Gets user token accounts
+7. Converts amounts to lamports
+8. Creates AddLiquidity instruction with proper accounts
+9. Builds transaction with add liquidity instruction
+
 ## Transaction Building Process
 
 ### 1. **Validation Phase**
@@ -474,6 +540,68 @@ interface CreatePoolTransactionResult {
   isNativeSOLPool: boolean;
   amountALamports: bigint;
   amountBLamports: bigint;
+}
+```
+
+### AddLiquidityParams
+```typescript
+interface AddLiquidityParams {
+  pool: Pool | DetailedPoolInfo;
+  amountA: number;
+  amountB: number;
+  fromPublicKey: PublicKey;
+  feePayerPublicKey?: PublicKey;
+}
+```
+
+### AddLiquidityTransactionResult
+```typescript
+interface AddLiquidityTransactionResult {
+  transaction: Transaction;
+  poolPDA: PublicKey;
+  tokenA: PublicKey;
+  tokenB: PublicKey;
+  lpMintPDA: PublicKey;
+  vaultA: PublicKey;
+  vaultB: PublicKey;
+  isNativeSOLPool: boolean;
+  amountALamports: bigint;
+  amountBLamports: bigint;
+  userTokenA: PublicKey;
+  userTokenB: PublicKey;
+  userLP: PublicKey;
+}
+```
+
+### Pool
+```typescript
+interface Pool {
+  address: string;
+  tokenA: TokenInfo;
+  tokenB: TokenInfo;
+}
+```
+
+### DetailedPoolInfo
+```typescript
+interface DetailedPoolInfo {
+  poolAddress: string;
+  poolType: string;
+  dataLength: number;
+  rawData: string;
+  tokenA: string;
+  tokenB: string;
+  bump: number;
+  reserveA: number;
+  reserveB: number;
+  totalLPSupply: number;
+  feeCollectedA: number;
+  feeCollectedB: number;
+  feeTreasury: string;
+  feeBps: number;
+  feePercentage: number;
+  tokenAInfo: DetailedTokenInfo;
+  tokenBInfo: DetailedTokenInfo;
 }
 ```
 

@@ -15,6 +15,8 @@ import {
   SwapTransactionResult,
   CreatePoolParams,
   CreatePoolTransactionResult,
+  AddLiquidityParams,
+  AddLiquidityTransactionResult,
   Wallet,
   SDKConfig,
   SDKError,
@@ -30,6 +32,7 @@ import {
   createNativeTransferTransaction,
   createSwapTransaction,
   createPoolTransaction,
+  createAddLiquidityTransaction,
 } from "../builders";
 import {
   signWithKeypair,
@@ -110,6 +113,15 @@ export class SolanaSDK {
    */
   async createPoolTransaction(params: CreatePoolParams): Promise<CreatePoolTransactionResult> {
     return createPoolTransaction(this.connection, this.config, params, params.fromPublicKey);
+  }
+
+  /**
+   * Creates an add liquidity transaction
+   * @param params - Add liquidity parameters
+   * @returns Add liquidity transaction result
+   */
+  async createAddLiquidityTransaction(params: AddLiquidityParams): Promise<AddLiquidityTransactionResult> {
+    return createAddLiquidityTransaction(this.connection, this.config, params, params.fromPublicKey);
   }
 
   /**

@@ -64,6 +64,14 @@ class SolanaSDK {
         return (0, builders_1.createPoolTransaction)(this.connection, this.config, params, params.fromPublicKey);
     }
     /**
+     * Creates an add liquidity transaction
+     * @param params - Add liquidity parameters
+     * @returns Add liquidity transaction result
+     */
+    async createAddLiquidityTransaction(params) {
+        return (0, builders_1.createAddLiquidityTransaction)(this.connection, this.config, params, params.fromPublicKey);
+    }
+    /**
      * Signs a transaction with a keypair
      * @param transaction - Transaction to sign
      * @param keypair - Keypair to sign with

@@ -167,6 +167,98 @@ export interface CreatePoolResult {
   error?: string;
 }
 
+// Detailed token information
+export interface DetailedTokenInfo {
+  id?: number;
+  mintAddress: string;
+  programId: string;
+  supply: string;
+  decimals: string;
+  name: string | null;
+  symbol: string | null;
+  uri: string | null;
+  mintAuthority: string | null;
+  freezeAuthority: string | null;
+  updateAuthority: string | null;
+  isInitialized: boolean;
+  isFrozen: boolean;
+  metadata: {
+    mintInfo: {
+      supply: string;
+      decimals: number;
+      isInitialized: boolean;
+      mintAuthority: string | null;
+      freezeAuthority: string | null;
+    };
+    programId: string;
+    tokenMetadata: any | null;
+  };
+  createdAt: string;
+  lastUpdated: string;
+}
+
+// Detailed pool information
+export interface DetailedPoolInfo {
+  poolAddress: string;
+  poolType: string;
+  dataLength: number;
+  rawData: string;
+  tokenA: string;
+  tokenB: string;
+  bump: number;
+  reserveA: number;
+  reserveB: number;
+  totalLPSupply: number;
+  feeCollectedA: number;
+  feeCollectedB: number;
+  feeTreasury: string;
+  feeBps: number;
+  feePercentage: number;
+  tokenAInfo: DetailedTokenInfo;
+  tokenBInfo: DetailedTokenInfo;
+}
+
+// Pool information for add liquidity
+export interface Pool {
+  address: string;
+  tokenA: TokenInfo;
+  tokenB: TokenInfo;
+}
+
+// Add liquidity parameters
+export interface AddLiquidityParams {
+  pool: Pool | DetailedPoolInfo;
+  amountA: number;
+  amountB: number;
+  fromPublicKey: PublicKey;
+  feePayerPublicKey?: PublicKey;
+}
+
+// Add liquidity transaction result
+export interface AddLiquidityTransactionResult {
+  transaction: Transaction;
+  poolPDA: PublicKey;
+  tokenA: PublicKey;
+  tokenB: PublicKey;
+  lpMintPDA: PublicKey;
+  vaultA: PublicKey;
+  vaultB: PublicKey;
+  isNativeSOLPool: boolean;
+  amountALamports: bigint;
+  amountBLamports: bigint;
+  userTokenA: PublicKey;
+  userTokenB: PublicKey;
+  userLP: PublicKey;
+}
+
+// Add liquidity result
+export interface AddLiquidityResult {
+  success: boolean;
+  signature?: TransactionSignature;
+  lpTokensReceived?: string;
+  error?: string;
+}
+
 // Signing function types
 export type SignWithKeypair = (transaction: Transaction, keypair: Keypair, connection: Connection) => Promise<Transaction>;
 export type SignWithWalletAdapter = (transaction: Transaction, wallet: any, connection: Connection) => Promise<Transaction>;

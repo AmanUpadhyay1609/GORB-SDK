@@ -20,6 +20,12 @@ export type {
   CreatePoolParams,
   CreatePoolTransactionResult,
   CreatePoolResult,
+  AddLiquidityParams,
+  AddLiquidityTransactionResult,
+  AddLiquidityResult,
+  DetailedTokenInfo,
+  DetailedPoolInfo,
+  Pool,
   Wallet,
   SDKConfig,
   SubmitOptions,
@@ -52,6 +58,7 @@ export {
   createNativeTransferTransaction,
   createSwapTransaction,
   createPoolTransaction,
+  createAddLiquidityTransaction,
 } from "../builders";
 
 // Signing utility exports
