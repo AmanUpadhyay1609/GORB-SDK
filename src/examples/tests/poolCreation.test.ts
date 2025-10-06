@@ -53,7 +53,7 @@ export async function createPoolSingleSigner() {
     const privateKeyBuf = bs58.decode(
       "your private key"
     );
-    const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf));; // Replace with your actual keypair
+    const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf)); // Replace with your actual keypair
     const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
     console.log("✅ Pool transaction signed");
     console.log("📝 Transaction after signing:");

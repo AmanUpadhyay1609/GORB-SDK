@@ -142,4 +142,6 @@ export const {
 } = addLiquidityExamples;
 
 
-createPoolSingleSigner();
+// createPoolSingleSigner();
+// swapTokenToToken();
+addLiquiditySingleSigner();

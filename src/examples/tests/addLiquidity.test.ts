@@ -3,6 +3,8 @@
  * This file contains all examples related to add liquidity functionality
  */
 
+import bs58 from 'bs58';
+
 import {
   createGorbchainSDK,
   Keypair,
@@ -16,25 +18,25 @@ export async function addLiquiditySingleSigner() {
   const sdk = createGorbchainSDK();
   
   const pool: Pool = {
-    address: "PoolAddressHere", // Replace with actual pool address
+    address: "4CcwcigWdxvGbMYs56PkxdGf7x8UD3BxokpTWqj2C5FG", // Replace with actual pool address
     tokenA: {
       address: "So11111111111111111111111111111111111111112", // SOL
-      symbol: "SOL",
+      symbol: "GORB",
       decimals: 9,
-      name: "Solana"
+      name: "Gorb"
     },
     tokenB: {
-      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-      symbol: "USDC",
-      decimals: 6,
-      name: "USD Coin"
+      address: "2NMb58LNoGBrM5zgRCywzXRroAyya9TWU3tZCS4kQGeH", // USDC
+      symbol: "RMI",
+      decimals: 9,
+      name: "Redmi Note 7 Pro"
     }
   };
 
   const addLiquidityParams: AddLiquidityParams = {
     pool,
-    amountA: 1.0, // 1 SOL
-    amountB: 100, // 100 USDC
+    amountA: 0.01, // 1 SOL
+    amountB: 12454, // 100 USDC
     fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
     // feePayerPublicKey not provided - sender pays fees
   };
@@ -54,8 +56,11 @@ export async function addLiquiditySingleSigner() {
       userLP: result.userLP.toBase58(),
     });
 
-    // Step 2: Sign transaction (adds fresh blockhash)
-    const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+        // Step 2: Sign transaction (adds fresh blockhash)
+        const privateKeyBuf = bs58.decode(
+          "your-private-key"
+        );
+        const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf)) // Replace with your actual keypair
     const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
     console.log("✅ Add liquidity transaction signed");
     console.log("📝 Transaction after signing:");

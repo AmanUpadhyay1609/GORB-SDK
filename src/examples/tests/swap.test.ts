@@ -2,6 +2,7 @@
  * Swap Examples
  * This file contains all examples related to token swap functionality
  */
+import bs58 from 'bs58';
 
 import {
   createGorbchainSDK,
@@ -16,18 +17,18 @@ export async function swapTokenToToken() {
   
   const swapParams: SwapParams = {
     fromToken: {
-      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC
-      symbol: "USDC",
-      decimals: 6,
-      name: "USD Coin"
+      address: "So11111111111111111111111111111111111111112", // Native Gorb
+      symbol: "GORB",
+      decimals: 9,
+      name: "Gorb"
     },
     toToken: {
-      address: "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", // USDT
-      symbol: "USDT",
-      decimals: 6,
-      name: "Tether USD"
+      address: "2NMb58LNoGBrM5zgRCywzXRroAyya9TWU3tZCS4kQGeH", // USDC
+      symbol: "RMI",
+      decimals: 9,
+      name: "Redmi Note 7 Pro"
     },
-    fromTokenAmount: 100, // 100 USDC
+    fromTokenAmount: 0.01, // 100 USDC
     fromPublicKey: new PublicKey("9x5kYbJgJ6WoHQayADmTYGh94SbLdbnecKP8bRr7x9uM"),
   };
 
@@ -43,7 +44,10 @@ export async function swapTokenToToken() {
     });
 
     // Step 2: Sign transaction (adds fresh blockhash)
-    const senderKeypair = Keypair.generate(); // Replace with your actual keypair
+    const privateKeyBuf = bs58.decode(
+      "your-private-key"
+    );
+    const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf)); // Replace with your actual keypair
     const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);
     console.log("✅ Swap transaction signed");
     console.log("📝 Transaction after signing:");
