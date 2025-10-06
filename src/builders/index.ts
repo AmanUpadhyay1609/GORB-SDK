@@ -4,6 +4,7 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import {
   createInitializeMintInstruction,
@@ -405,22 +406,33 @@ export async function createNativeTransferTransaction(
   }
 }
 
-// AMM Program constants (these would typically come from your AMM program)
-const AMM_PROGRAM_ID = new PublicKey("11111111111111111111111111111111"); // Placeholder - replace with actual AMM program ID
+// Gorbchain AMM Program constants
+const AMM_PROGRAM_ID = new PublicKey("EtGrXaRpEdozMtfd8tbkbrbDN8LqZNba3xWTdT3HtQWq");
+const SPL_TOKEN_PROGRAM_ID = new PublicKey("G22oYgZ6LnVcy7v8eSNi2xpNk1NcZiPD8CVKSTut7oZ6");
+const ATA_PROGRAM_ID = new PublicKey("GoATGVNeSXerFerPqTJ8hcED1msPWHHLxao2vwBYqowm");
 const NATIVE_SOL_MINT = new PublicKey("So11111111111111111111111111111111111111112");
 const LAMPORTS_PER_SOL = 1_000_000_000;
 
+// Seed constants
+const SEEDS = {
+  POOL: "pool",
+  VAULT: "vault",
+  MINT: "mint",
+} as const;
+
 // Instruction discriminators and data sizes
 const INSTRUCTION_DISCRIMINATORS = {
-  SWAP: 0x01, // Replace with actual discriminator
-  INIT_POOL: 0x02, // Replace with actual discriminator
-  ADD_LIQUIDITY: 0x03, // Replace with actual discriminator
+  INIT_POOL: 0,
+  ADD_LIQUIDITY: 1,
+  REMOVE_LIQUIDITY: 2,
+  SWAP: 3,
 } as const;
 
 const INSTRUCTION_DATA_SIZES = {
-  SWAP: 10, // 1 byte discriminator + 8 bytes amount + 1 byte direction
-  INIT_POOL: 17, // 1 byte discriminator + 8 bytes amountA + 8 bytes amountB
-  ADD_LIQUIDITY: 17, // 1 byte discriminator + 8 bytes amountA + 8 bytes amountB
+  INIT_POOL: 1 + 8 + 8, // discriminator + amount_a + amount_b
+  SWAP: 1 + 8 + 1,      // discriminator + amount_in + direction_a_to_b
+  ADD_LIQUIDITY: 1 + 8 + 8, // discriminator + amount_a + amount_b
+  REMOVE_LIQUIDITY: 1 + 8,  // discriminator + lp_amount
 } as const;
 
 // Helper function to convert token amount to lamports
@@ -429,45 +441,31 @@ function tokenAmountToLamports(amount: number, decimals: number): bigint {
 }
 
 // Helper function to check if token is native SOL
-function isNativeSOL(tokenAddress: string): boolean {
-  return tokenAddress === NATIVE_SOL_MINT.toBase58() || tokenAddress === "So11111111111111111111111111111111111111112";
+function isNativeSOL(mint: string): boolean {
+  return mint === NATIVE_SOL_MINT.toString();
 }
 
 // Helper function to get user token account address
 function getUserTokenAccount(mint: PublicKey, user: PublicKey): PublicKey {
-  // For native SOL, return the user's public key
-  if (mint.equals(NATIVE_SOL_MINT)) {
-    return user;
+  if (isNativeSOL(mint.toString())) {
+    return user; // For native SOL, the user's main account is used
   }
-  
-  // For SPL tokens, derive the associated token account
-  return PublicKey.findProgramAddressSync(
-    [user.toBuffer(), new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL").toBuffer(), mint.toBuffer()],
-    new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
-  )[0];
+  return getAssociatedTokenAddressSync(mint, user, false, SPL_TOKEN_PROGRAM_ID, ATA_PROGRAM_ID);
 }
 
 // Helper function to derive vault PDA
-function deriveVaultPDA(poolPDA: PublicKey, tokenMint: PublicKey, isNativeSOLPool: boolean = false): [PublicKey, number] {
-  if (isNativeSOLPool && tokenMint.equals(NATIVE_SOL_MINT)) {
-    // For native SOL pools, the vault might be the pool PDA itself or a specific derivation
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("vault_sol"), poolPDA.toBuffer()],
-      AMM_PROGRAM_ID
-    );
-  }
-  
-  // For regular SPL tokens
+function deriveVaultPDA(poolPDA: PublicKey, tokenMint: PublicKey, isNativeSOLPool: boolean): [PublicKey, number] {
+  const seed = isNativeSOLPool ? "native_sol_vault" : SEEDS.VAULT;
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("vault"), poolPDA.toBuffer(), tokenMint.toBuffer()],
+    [Buffer.from(seed), poolPDA.toBuffer(), tokenMint.toBuffer()],
     AMM_PROGRAM_ID
   );
 }
 
 // Helper function to find pool configuration
 async function findPoolConfiguration(
-  fromTokenMint: PublicKey,
-  toTokenMint: PublicKey,
+  fromToken: PublicKey,
+  toToken: PublicKey,
   _connection: Connection
 ): Promise<{
   poolPDA: PublicKey;
@@ -475,52 +473,44 @@ async function findPoolConfiguration(
   tokenB: PublicKey;
   directionAtoB: boolean;
 }> {
-  // This would use the same logic as your existing findPoolConfiguration function
-  // For now, using a placeholder - you'll need to implement the actual pool finding logic
-  
-  // Placeholder implementation - replace with actual pool finding logic
-  const poolPDA = PublicKey.findProgramAddressSync(
-    [Buffer.from("pool"), fromTokenMint.toBuffer(), toTokenMint.toBuffer()],
-    AMM_PROGRAM_ID
-  )[0];
-
-  // Determine direction based on token order (this is a simplified example)
-  const directionAtoB = fromTokenMint.toBase58() < toTokenMint.toBase58();
-  
+  // For now, return a simple configuration
+  // In a real implementation, you would query the blockchain for existing pools
+  const [poolPDA] = derivePoolPDA(fromToken, toToken);
   return {
     poolPDA,
-    tokenA: directionAtoB ? fromTokenMint : toTokenMint,
-    tokenB: directionAtoB ? toTokenMint : fromTokenMint,
-    directionAtoB,
+    tokenA: fromToken,
+    tokenB: toToken,
+    directionAtoB: true,
   };
 }
 
 // Helper function to get common accounts
-function getCommonAccounts(_user: PublicKey): Array<{ pubkey: PublicKey; isSigner: boolean; isWritable: boolean }> {
-  // This would return the common accounts needed for the swap instruction
-  // Based on your existing getCommonAccounts function
+function getCommonAccounts(_user: PublicKey): Array<{ pubkey: PublicKey, isSigner: boolean, isWritable: boolean }> {
   return [
-    { pubkey: new PublicKey("11111111111111111111111111111111"), isSigner: false, isWritable: false }, // System Program
-    { pubkey: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), isSigner: false, isWritable: false }, // Token Program
-    { pubkey: new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"), isSigner: false, isWritable: false }, // Associated Token Program
+    { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: ATA_PROGRAM_ID, isSigner: false, isWritable: false },
+    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
   ];
 }
 
 // Helper function to derive pool PDA
 function derivePoolPDA(tokenA: PublicKey, tokenB: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("pool"), tokenA.toBuffer(), tokenB.toBuffer()],
+    [Buffer.from(SEEDS.POOL), tokenA.toBuffer(), tokenB.toBuffer()],
     AMM_PROGRAM_ID
   );
 }
 
 // Helper function to derive LP mint PDA
-function deriveLPMintPDA(poolPDA: PublicKey, _isNativeSOLPool: boolean = false): [PublicKey, number] {
+function deriveLPMintPDA(poolPDA: PublicKey, isNativeSOLPool: boolean): [PublicKey, number] {
+  const seed = isNativeSOLPool ? "native_sol_lp_mint" : SEEDS.MINT;
   return PublicKey.findProgramAddressSync(
-    [Buffer.from("lp_mint"), poolPDA.toBuffer()],
+    [Buffer.from(seed), poolPDA.toBuffer()],
     AMM_PROGRAM_ID
   );
 }
+
 
 /**
  * Creates a universal swap transaction
