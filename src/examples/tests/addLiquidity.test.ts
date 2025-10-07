@@ -18,7 +18,7 @@ export async function addLiquiditySingleSigner() {
   const sdk = createGorbchainSDK();
   
   const pool: Pool = {
-    address: "4CcwcigWdxvGbMYs56PkxdGf7x8UD3BxokpTWqj2C5FG", // Replace with actual pool address
+    address: "8K4M2qdXMnCb3LtTEc5G9uhhNdYvXmZH679KUtUxpuLg", // Replace with actual pool address
     tokenA: {
       address: "So11111111111111111111111111111111111111112", // SOL
       symbol: "GORB",
@@ -26,7 +26,7 @@ export async function addLiquiditySingleSigner() {
       name: "Gorb"
     },
     tokenB: {
-      address: "2NMb58LNoGBrM5zgRCywzXRroAyya9TWU3tZCS4kQGeH", // USDC
+      address: "HYeycCbBNXHbvgCjSUnveLqCQvrgxAjSZHGipRbaD7Dp", // USDC
       symbol: "RMI",
       decimals: 9,
       name: "Redmi Note 7 Pro"
@@ -58,7 +58,7 @@ export async function addLiquiditySingleSigner() {
 
         // Step 2: Sign transaction (adds fresh blockhash)
         const privateKeyBuf = bs58.decode(
-          "your-private-key"
+          "your private key"
         );
         const senderKeypair = Keypair.fromSecretKey(Uint8Array.from(privateKeyBuf)) // Replace with your actual keypair
     const signedTx = await sdk.signWithDualKeypairs(result.transaction, senderKeypair);

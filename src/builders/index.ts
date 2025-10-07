@@ -855,6 +855,56 @@ export async function createPoolTransaction(
   }
 }
 
+
+
+
+
+
+/**
+ * Validate token amounts
+ */
+export function validateTokenAmounts(...amounts: number[]): void {
+  for (const amount of amounts) {
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("Invalid token amount. Amount must be greater than 0.");
+    }
+    // Allow very small amounts like 0.000001
+    if (amount < 0.000001) {
+      console.warn("Very small amount detected:", amount);
+    }
+  }
+}
+
+/**
+ * Validate if a string is a valid Solana address
+ */
+export function isValidSolanaAddress(address: string): boolean {
+  try {
+    new PublicKey(address);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validate Solana address and throw descriptive error if invalid
+ */
+export function validateSolanaAddress(
+  address: string,
+  description: string = "address"
+): void {
+  if (!address) {
+    throw new Error(`${description} is required`);
+  }
+
+  if (!isValidSolanaAddress(address)) {
+    throw new Error(
+      `Invalid ${description}: ${address}. Must be a valid Solana address.`
+    );
+  }
+}
+
 /**
  * Creates an add liquidity transaction without signing
  * @param connection - Solana connection
@@ -974,26 +1024,25 @@ export async function createAddLiquidityTransaction(
     const transaction = new Transaction();
     transaction.feePayer = feePayer;
 
-    // Prepare accounts for AddLiquidity
+    // Prepare accounts for AddLiquidity (must match Rust program order exactly)
+    // Rust expects: pool, token_a, token_b, vault_a, vault_b, lp_mint,
+    // user_token_a, user_token_b, user_lp, user_info, token_program
     const userWritable = isNativeSOLPool;
-    let accounts = [
+    const accounts = [
       { pubkey: poolPDA, isSigner: false, isWritable: true },
       { pubkey: finalTokenA, isSigner: false, isWritable: false },
       { pubkey: finalTokenB, isSigner: false, isWritable: false },
       { pubkey: vaultA, isSigner: false, isWritable: true },
       { pubkey: vaultB, isSigner: false, isWritable: true },
       { pubkey: lpMintPDA, isSigner: false, isWritable: true },
-      { pubkey: fromPublicKey, isSigner: true, isWritable: userWritable },
       { pubkey: userTokenA, isSigner: false, isWritable: true },
       { pubkey: userTokenB, isSigner: false, isWritable: true },
       { pubkey: userLP, isSigner: false, isWritable: true },
-      ...getCommonAccounts(fromPublicKey),
+      { pubkey: fromPublicKey, isSigner: true, isWritable: userWritable },
+      { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      // For native SOL flows, SystemProgram is required for lamport transfers
+      ...(isNativeSOLPool ? [{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false }] : []),
     ];
-
-    // Add SystemProgram for native SOL operations
-    if (isNativeSOLPool) {
-      accounts.push({ pubkey: SystemProgram.programId, isSigner: false, isWritable: false });
-    }
 
     // Create instruction data
     const data = Buffer.alloc(INSTRUCTION_DATA_SIZES.ADD_LIQUIDITY);
