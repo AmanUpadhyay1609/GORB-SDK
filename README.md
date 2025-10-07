@@ -15,7 +15,7 @@ A modular, type-safe SDK for Solana-based blockchain operations. This SDK suppor
 ## Installation
 
 ```bash
-npm install @gorbchain/solana-sdk
+npm install @gorbchain/gorb-sdk
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ npm install @gorbchain/solana-sdk
 ### Basic Usage
 
 ```typescript
-import { createGorbchainSDK, Keypair } from '@gorbchain/solana-sdk';
+import { createGorbchainSDK, Keypair } from '@gorbchain/gorb-sdk';
 
 // Create SDK instance
 const sdk = createGorbchainSDK();
@@ -53,7 +53,7 @@ console.log("Token created:", submitResult.signature);
 ### Using Wallet Adapter
 
 ```typescript
-import { createGorbchainSDK } from '@gorbchain/solana-sdk';
+import { createGorbchainSDK } from '@gorbchain/gorb-sdk';
 
 const sdk = createGorbchainSDK();
 

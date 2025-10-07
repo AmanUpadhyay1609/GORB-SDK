@@ -1,5 +1,5 @@
 {
-  "name": "@gorbchain/solana-sdk",
+  "name": "@gorbchain/gorb-sdk",
   "version": "1.0.0",
   "description": "A modular SDK for Solana-based blockchain operations, supporting Gorbchain and other Solana forks",
   "main": "dist/index.js",
@@ -66,10 +66,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gorbchain/solana-sdk.git"
+    "url": "https://github.com/AmanUpadhyay1609/GORB-SDK.git"
   },
   "bugs": {
-    "url": "https://github.com/gorbchain/solana-sdk/issues"
+    "url": "https://github.com/AmanUpadhyay1609/GORB-SDK/issues"
   },
-  "homepage": "https://github.com/gorbchain/solana-sdk#readme"
+  "homepage": "https://github.com/AmanUpadhyay1609/GORB-SDK#readme"
 }
