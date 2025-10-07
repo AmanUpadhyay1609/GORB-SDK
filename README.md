@@ -76,6 +76,17 @@ const signedTx = await sdk.signWithWalletAndKeypair(updatedTx, wallet, result.mi
 const submitResult = await sdk.submitTransaction(signedTx);
 ```
 
+### Node.js import examples
+
+- CommonJS:
+```js
+const { createGorbchainSDK } = require('@gorbchain/solana-sdk');
+```
+- ESM/TypeScript:
+```ts
+import { createGorbchainSDK } from '@gorbchain/solana-sdk';
+```
+
 ## Supported Blockchains
 
 ### Gorbchain
@@ -215,7 +226,7 @@ try {
 
 ## Examples
 
-See the `examples.ts` file for comprehensive usage examples including:
+See `src/examples` in the repository for comprehensive usage examples including:
 - Basic token creation
 - NFT minting
 - Wallet adapter integration

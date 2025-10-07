@@ -5,6 +5,9 @@ exports.createNFTTransaction = createNFTTransaction;
 exports.createNativeTransferTransaction = createNativeTransferTransaction;
 exports.createSwapTransaction = createSwapTransaction;
 exports.createPoolTransaction = createPoolTransaction;
+exports.validateTokenAmounts = validateTokenAmounts;
+exports.isValidSolanaAddress = isValidSolanaAddress;
+exports.validateSolanaAddress = validateSolanaAddress;
 exports.createAddLiquidityTransaction = createAddLiquidityTransaction;
 const web3_js_1 = require("@solana/web3.js");
 const spl_token_1 = require("@solana/spl-token");
@@ -252,19 +255,28 @@ function tokenAmountToLamports(amount, decimals) {
 }
 // Helper function to check if token is native SOL
 function isNativeSOL(mint) {
-    return mint === NATIVE_SOL_MINT.toString();
+    const mintString = typeof mint === 'string' ? mint : mint.toString();
+    return mintString === NATIVE_SOL_MINT.toString();
 }
 // Helper function to get user token account address
 function getUserTokenAccount(mint, user) {
-    if (isNativeSOL(mint.toString())) {
+    if (isNativeSOL(mint)) {
         return user; // For native SOL, the user's main account is used
     }
     return (0, spl_token_1.getAssociatedTokenAddressSync)(mint, user, false, SPL_TOKEN_PROGRAM_ID, ATA_PROGRAM_ID);
 }
 // Helper function to derive vault PDA
 function deriveVaultPDA(poolPDA, tokenMint, isNativeSOLPool) {
-    const seed = isNativeSOLPool ? "native_sol_vault" : SEEDS.VAULT;
-    return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from(seed), poolPDA.toBuffer(), tokenMint.toBuffer()], AMM_PROGRAM_ID);
+    // For native SOL, the vault is the pool account itself
+    if (isNativeSOL(tokenMint)) {
+        return [poolPDA, 0]; // Return pool PDA as vault for SOL
+    }
+    // For non-SOL token in a native SOL pool
+    if (isNativeSOLPool) {
+        return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from("native_sol_vault"), poolPDA.toBuffer(), tokenMint.toBuffer()], AMM_PROGRAM_ID);
+    }
+    // Regular token-token pool
+    return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from(SEEDS.VAULT), poolPDA.toBuffer(), tokenMint.toBuffer()], AMM_PROGRAM_ID);
 }
 // Helper function to find pool configuration
 async function findPoolConfiguration(fromToken, toToken, _connection) {
@@ -282,13 +294,20 @@ async function findPoolConfiguration(fromToken, toToken, _connection) {
 function getCommonAccounts(_user) {
     return [
         { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
-        { pubkey: ATA_PROGRAM_ID, isSigner: false, isWritable: false },
         { pubkey: web3_js_1.SystemProgram.programId, isSigner: false, isWritable: false },
         { pubkey: web3_js_1.SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        { pubkey: ATA_PROGRAM_ID, isSigner: false, isWritable: false },
     ];
 }
 // Helper function to derive pool PDA
 function derivePoolPDA(tokenA, tokenB) {
+    // Check if this is a native SOL pool
+    if (isNativeSOL(tokenA) || isNativeSOL(tokenB)) {
+        // For native SOL pools, use the non-SOL token for PDA derivation
+        const nonSOLToken = isNativeSOL(tokenA) ? tokenB : tokenA;
+        return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from("native_sol_pool"), nonSOLToken.toBuffer()], AMM_PROGRAM_ID);
+    }
+    // Regular token-token pool
     return web3_js_1.PublicKey.findProgramAddressSync([Buffer.from(SEEDS.POOL), tokenA.toBuffer(), tokenB.toBuffer()], AMM_PROGRAM_ID);
 }
 // Helper function to derive LP mint PDA
@@ -463,7 +482,7 @@ async function createPoolTransaction(_connection, _config, params, _payer) {
             throw new types_1.SDKError(`Invalid token address format: ${error.message}`);
         }
         // Check if this is a native SOL pool
-        const isNativeSOLPool = isNativeSOL(TOKEN_A_MINT.toString()) || isNativeSOL(TOKEN_B_MINT.toString());
+        const isNativeSOLPool = isNativeSOL(TOKEN_A_MINT) || isNativeSOL(TOKEN_B_MINT);
         // For native SOL pools, ensure SOL is always tokenA
         let finalTokenA = TOKEN_A_MINT;
         let finalTokenB = TOKEN_B_MINT;
@@ -473,11 +492,11 @@ async function createPoolTransaction(_connection, _config, params, _payer) {
         let finalTokenBInfo = tokenB;
         if (isNativeSOLPool) {
             // Validate that only one token is native SOL
-            if (isNativeSOL(TOKEN_A_MINT.toString()) && isNativeSOL(TOKEN_B_MINT.toString())) {
+            if (isNativeSOL(TOKEN_A_MINT) && isNativeSOL(TOKEN_B_MINT)) {
                 throw new types_1.SDKError("Cannot create a pool with SOL as both tokens");
             }
             // Ensure SOL is always tokenA
-            if (isNativeSOL(TOKEN_B_MINT.toString())) {
+            if (isNativeSOL(TOKEN_B_MINT)) {
                 // Swap tokens so SOL is tokenA
                 finalTokenA = TOKEN_B_MINT;
                 finalTokenB = TOKEN_A_MINT;
@@ -497,10 +516,10 @@ async function createPoolTransaction(_connection, _config, params, _payer) {
         const userTokenB = getUserTokenAccount(finalTokenB, fromPublicKey);
         const userLP = getUserTokenAccount(lpMintPDA, fromPublicKey);
         // Convert amounts to lamports
-        const amountALamports = isNativeSOL(finalTokenA.toString())
+        const amountALamports = isNativeSOL(finalTokenA)
             ? BigInt(finalAmountA * LAMPORTS_PER_SOL)
             : tokenAmountToLamports(finalAmountA, finalTokenAInfo.decimals);
-        const amountBLamports = isNativeSOL(finalTokenB.toString())
+        const amountBLamports = isNativeSOL(finalTokenB)
             ? BigInt(finalAmountB * LAMPORTS_PER_SOL)
             : tokenAmountToLamports(finalAmountB, finalTokenBInfo.decimals);
         // Determine fee payer
@@ -553,6 +572,43 @@ async function createPoolTransaction(_connection, _config, params, _payer) {
     }
     catch (error) {
         throw new types_1.SDKError(`Failed to create pool transaction: ${error.message}`);
+    }
+}
+/**
+ * Validate token amounts
+ */
+function validateTokenAmounts(...amounts) {
+    for (const amount of amounts) {
+        if (isNaN(amount) || amount <= 0) {
+            throw new Error("Invalid token amount. Amount must be greater than 0.");
+        }
+        // Allow very small amounts like 0.000001
+        if (amount < 0.000001) {
+            console.warn("Very small amount detected:", amount);
+        }
+    }
+}
+/**
+ * Validate if a string is a valid Solana address
+ */
+function isValidSolanaAddress(address) {
+    try {
+        new web3_js_1.PublicKey(address);
+        return true;
+    }
+    catch {
+        return false;
+    }
+}
+/**
+ * Validate Solana address and throw descriptive error if invalid
+ */
+function validateSolanaAddress(address, description = "address") {
+    if (!address) {
+        throw new Error(`${description} is required`);
+    }
+    if (!isValidSolanaAddress(address)) {
+        throw new Error(`Invalid ${description}: ${address}. Must be a valid Solana address.`);
     }
 }
 /**
@@ -610,7 +666,7 @@ async function createAddLiquidityTransaction(_connection, _config, params, _paye
             throw new types_1.SDKError(`Invalid token address format: ${error.message}`);
         }
         // Check if this is a native SOL pool
-        const isNativeSOLPool = isNativeSOL(TOKEN_A_MINT.toString()) || isNativeSOL(TOKEN_B_MINT.toString());
+        const isNativeSOLPool = isNativeSOL(TOKEN_A_MINT) || isNativeSOL(TOKEN_B_MINT);
         // For native SOL pools, ensure SOL is always tokenA
         let finalTokenA = TOKEN_A_MINT;
         let finalTokenB = TOKEN_B_MINT;
@@ -620,11 +676,11 @@ async function createAddLiquidityTransaction(_connection, _config, params, _paye
         let finalTokenBInfo = tokenB;
         if (isNativeSOLPool) {
             // Validate that only one token is native SOL
-            if (isNativeSOL(TOKEN_A_MINT.toString()) && isNativeSOL(TOKEN_B_MINT.toString())) {
+            if (isNativeSOL(TOKEN_A_MINT) && isNativeSOL(TOKEN_B_MINT)) {
                 throw new types_1.SDKError("Cannot add liquidity to a pool with SOL as both tokens");
             }
             // Ensure SOL is always tokenA
-            if (isNativeSOL(TOKEN_B_MINT.toString())) {
+            if (isNativeSOL(TOKEN_B_MINT)) {
                 // Swap tokens so SOL is tokenA
                 finalTokenA = TOKEN_B_MINT;
                 finalTokenB = TOKEN_A_MINT;
@@ -644,10 +700,10 @@ async function createAddLiquidityTransaction(_connection, _config, params, _paye
         const userTokenB = getUserTokenAccount(finalTokenB, fromPublicKey);
         const userLP = getUserTokenAccount(lpMintPDA, fromPublicKey);
         // Convert amounts to lamports
-        const amountALamports = isNativeSOL(finalTokenA.toString())
+        const amountALamports = isNativeSOL(finalTokenA)
             ? BigInt(finalAmountA * LAMPORTS_PER_SOL)
             : tokenAmountToLamports(finalAmountA, finalTokenAInfo.decimals);
-        const amountBLamports = isNativeSOL(finalTokenB.toString())
+        const amountBLamports = isNativeSOL(finalTokenB)
             ? BigInt(finalAmountB * LAMPORTS_PER_SOL)
             : tokenAmountToLamports(finalAmountB, finalTokenBInfo.decimals);
         // Determine fee payer
@@ -655,25 +711,25 @@ async function createAddLiquidityTransaction(_connection, _config, params, _paye
         // Create transaction
         const transaction = new web3_js_1.Transaction();
         transaction.feePayer = feePayer;
-        // Prepare accounts for AddLiquidity
+        // Prepare accounts for AddLiquidity (must match Rust program order exactly)
+        // Rust expects: pool, token_a, token_b, vault_a, vault_b, lp_mint,
+        // user_token_a, user_token_b, user_lp, user_info, token_program
         const userWritable = isNativeSOLPool;
-        let accounts = [
+        const accounts = [
             { pubkey: poolPDA, isSigner: false, isWritable: true },
             { pubkey: finalTokenA, isSigner: false, isWritable: false },
             { pubkey: finalTokenB, isSigner: false, isWritable: false },
             { pubkey: vaultA, isSigner: false, isWritable: true },
             { pubkey: vaultB, isSigner: false, isWritable: true },
             { pubkey: lpMintPDA, isSigner: false, isWritable: true },
-            { pubkey: fromPublicKey, isSigner: true, isWritable: userWritable },
             { pubkey: userTokenA, isSigner: false, isWritable: true },
             { pubkey: userTokenB, isSigner: false, isWritable: true },
             { pubkey: userLP, isSigner: false, isWritable: true },
-            ...getCommonAccounts(fromPublicKey),
+            { pubkey: fromPublicKey, isSigner: true, isWritable: userWritable },
+            { pubkey: SPL_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+            // For native SOL flows, SystemProgram is required for lamport transfers
+            ...(isNativeSOLPool ? [{ pubkey: web3_js_1.SystemProgram.programId, isSigner: false, isWritable: false }] : []),
         ];
-        // Add SystemProgram for native SOL operations
-        if (isNativeSOLPool) {
-            accounts.push({ pubkey: web3_js_1.SystemProgram.programId, isSigner: false, isWritable: false });
-        }
         // Create instruction data
         const data = Buffer.alloc(INSTRUCTION_DATA_SIZES.ADD_LIQUIDITY);
         data.writeUInt8(INSTRUCTION_DISCRIMINATORS.ADD_LIQUIDITY, 0);

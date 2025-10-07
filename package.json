@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "description": "A modular SDK for Solana-based blockchain operations, supporting Gorbchain and other Solana forks",
   "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js"
+    }
+  },
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
@@ -23,23 +30,40 @@
   "author": "GORB Chain Team",
   "license": "MIT",
   "dependencies": {
-    "@solana/spl-token": "^0.3.9",
-    "@solana/web3.js": "^1.87.6",
     "bs58": "^6.0.0"
   },
   "devDependencies": {
+    "@solana/spl-token": "^0.3.9",
+    "@solana/web3.js": "^1.87.6",
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   },
+  "sideEffects": false,
   "peerDependencies": {
     "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.87.0"
   },
+  "peerDependenciesMeta": {
+    "@solana/spl-token": { "optional": false },
+    "@solana/web3.js": { "optional": false }
+  },
+  "engines": {
+    "node": ">=16"
+  },
   "files": [
-    "dist",
+    "dist/index.*",
+    "dist/src/builders/**",
+    "dist/src/constants/**",
+    "dist/src/core/**",
+    "dist/src/signing/**",
+    "dist/src/submission/**",
+    "dist/src/types/**",
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/gorbchain/solana-sdk.git"

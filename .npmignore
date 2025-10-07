@@ -1,0 +1,39 @@
+# Sources and workspace-only content
+src
+node_modules
+coverage
+.vscode
+.idea
+*.log
+*.tgz
+*.tsbuildinfo
+
+# Env/OS
+.env*
+.DS_Store
+
+# Git/CI
+.git
+.github
+
+# Build artifacts not needed
+**/*.map
+
+# Exclude built examples and tests from dist
+/dist/src/examples
+/dist/src/tests
+
+# Tests and examples (sources)
+**/*.test.*
+src/examples
+src/tests
+examples
+
+# Large docs (kept on GitHub repo)
+ADD_LIQUIDITY_GUIDE.md
+BLOCKHASH_OPTIMIZATION_GUIDE.md
+POOL_CREATION_GUIDE.md
+SWAP_GUIDE.md
+MIGRATION_GUIDE.md
+STRUCTURE.md
+IMPROVEMENTS.md

@@ -44,6 +44,18 @@ export declare function createSwapTransaction(connection: Connection, _config: B
  */
 export declare function createPoolTransaction(_connection: Connection, _config: BlockchainConfig, params: CreatePoolParams, _payer: PublicKey): Promise<CreatePoolTransactionResult>;
 /**
+ * Validate token amounts
+ */
+export declare function validateTokenAmounts(...amounts: number[]): void;
+/**
+ * Validate if a string is a valid Solana address
+ */
+export declare function isValidSolanaAddress(address: string): boolean;
+/**
+ * Validate Solana address and throw descriptive error if invalid
+ */
+export declare function validateSolanaAddress(address: string, description?: string): void;
+/**
  * Creates an add liquidity transaction without signing
  * @param connection - Solana connection
  * @param config - Blockchain configuration
