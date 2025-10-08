@@ -10,6 +10,7 @@ import { nativeTransferExamples } from "./tests/nativeTransfer.test";
 import { swapExamples } from "./tests/swap.test";
 import { poolCreationExamples } from "./tests/poolCreation.test";
 import { addLiquidityExamples } from "./tests/addLiquidity.test";
+import { nonNativeTransferExamples } from "./tests/nonNativeTransfer.test";
 
 // Re-export all examples for easy access
 export const examples = {
@@ -19,6 +20,7 @@ export const examples = {
   swap: swapExamples,
   poolCreation: poolCreationExamples,
   addLiquidity: addLiquidityExamples,
+  nonNativeTransfer: nonNativeTransferExamples,
 };
 
 // Individual exports for direct access
@@ -29,6 +31,7 @@ export {
   swapExamples,
   poolCreationExamples,
   addLiquidityExamples,
+  nonNativeTransferExamples,
 };
 
 // Convenience function to run all examples
@@ -53,6 +56,9 @@ export async function runAllExamples() {
     
     console.log("\n💧 Running Add Liquidity Examples...");
     await examples.addLiquidity.addLiquiditySingleSigner();
+    
+    console.log("\n🪙 Running Non-Native Transfer Examples...");
+    await examples.nonNativeTransfer.nonNativeTransferSingleSigner();
     
     console.log("\n✅ All examples completed successfully!");
   } catch (error: any) {
@@ -141,7 +147,18 @@ export const {
   addLiquidityWithDifferentAmounts,
 } = addLiquidityExamples;
 
+export const {
+  nonNativeTransferSingleSigner,
+  nonNativeTransferDualSigner,
+  nonNativeTransferWithWallet,
+  nonNativeTransferWithWalletAndAdmin,
+  nonNativeTransferCustomAmount,
+  nonNativeTransferWithErrorHandling,
+  nonNativeTransferWithBalanceCheck,
+} = nonNativeTransferExamples;
+
 
 // createPoolSingleSigner();
 // swapTokenToToken();
-addLiquiditySingleSigner();
+// addLiquiditySingleSigner();
+// nonNativeTransferSingleSigner();

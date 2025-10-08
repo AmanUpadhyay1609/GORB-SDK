@@ -4,6 +4,7 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import {
@@ -28,6 +29,10 @@ import {
   SwapTransactionResult,
   CreatePoolParams,
   CreatePoolTransactionResult,
+  NonNativeTransferParams,
+  NonNativeTransferTransactionResult,
+  EnsureTokenAccountsParams,
+  EnsureTokenAccountsResult,
   AddLiquidityParams,
   AddLiquidityTransactionResult,
   TokenInfo,
@@ -903,6 +908,245 @@ export function validateSolanaAddress(
       `Invalid ${description}: ${address}. Must be a valid Solana address.`
     );
   }
+}
+
+/**
+ * Parse human-readable amount to smallest units (BigInt)
+ * Handles decimal precision correctly to avoid float rounding issues
+ */
+export function parseHumanAmountToBigInt(
+  amountString: string,
+  decimals: number
+): bigint {
+  const parts = amountString.split(".");
+  const intPart = parts[0] || "0";
+  const fracPart = parts[1] || "";
+  
+  if (fracPart.length > decimals) {
+    // Truncate fractional part if it exceeds decimals
+    const truncated = fracPart.slice(0, decimals);
+    return BigInt(intPart + truncated);
+  } else {
+    // Pad fractional part with zeros if needed
+    const paddedFrac = fracPart.padEnd(decimals, "0");
+    return BigInt(intPart + paddedFrac);
+  }
+}
+
+/**
+ * Check if token accounts exist and optionally create them
+ * Supports both keypair and wallet for ATA creation
+ */
+export async function ensureTokenAccountsExist(
+  params: EnsureTokenAccountsParams,
+  connection: Connection,
+  signer?: Keypair | any // Keypair or wallet
+): Promise<EnsureTokenAccountsResult> {
+  const { mintAddress, fromPublicKey, toPublicKey } = params;
+
+  // Derive ATAs deterministically
+  const fromTokenAccount = getAssociatedTokenAddressSync(
+    mintAddress,
+    fromPublicKey,
+    false,
+    SPL_TOKEN_PROGRAM_ID,
+    ATA_PROGRAM_ID
+  );
+
+  const toTokenAccount = getAssociatedTokenAddressSync(
+    mintAddress,
+    toPublicKey,
+    false,
+    SPL_TOKEN_PROGRAM_ID,
+    ATA_PROGRAM_ID
+  );
+
+  // Check existence on chain
+  const [fromAccountInfo, toAccountInfo] = await Promise.all([
+    connection.getAccountInfo(fromTokenAccount),
+    connection.getAccountInfo(toTokenAccount),
+  ]);
+
+  const fromAccountExists = !!fromAccountInfo;
+  const toAccountExists = !!toAccountInfo;
+  const createdAccounts: PublicKey[] = [];
+
+  // If both accounts exist, return early
+  if (fromAccountExists && toAccountExists) {
+    return {
+      fromTokenAccount,
+      toTokenAccount,
+      fromAccountExists,
+      toAccountExists,
+      createdAccounts,
+    };
+  }
+
+  // If no signer provided, return info about missing accounts
+  if (!signer) {
+    return {
+      fromTokenAccount,
+      toTokenAccount,
+      fromAccountExists,
+      toAccountExists,
+      createdAccounts,
+    };
+  }
+
+  // Create transaction for missing accounts
+  const transaction = new Transaction();
+  const payer = signer.publicKey || signer.publicKey;
+
+  // Create from account if missing
+  if (!fromAccountExists) {
+    const fromIx = createAssociatedTokenAccountInstruction(
+      payer,
+      fromTokenAccount,
+      fromPublicKey,
+      mintAddress,
+      SPL_TOKEN_PROGRAM_ID,
+      ATA_PROGRAM_ID
+    );
+    transaction.add(fromIx);
+    createdAccounts.push(fromTokenAccount);
+  }
+
+  // Create to account if missing
+  if (!toAccountExists) {
+    const toIx = createAssociatedTokenAccountInstruction(
+      payer,
+      toTokenAccount,
+      toPublicKey,
+      mintAddress,
+      SPL_TOKEN_PROGRAM_ID,
+      ATA_PROGRAM_ID
+    );
+    transaction.add(toIx);
+    createdAccounts.push(toTokenAccount);
+  }
+
+  return {
+    fromTokenAccount,
+    toTokenAccount,
+    fromAccountExists,
+    toAccountExists,
+    createdAccounts,
+    transaction,
+  };
+}
+
+/**
+ * Create non-native token transfer transaction
+ * Transfers SPL tokens from one account to another
+ * Note: This function assumes token accounts exist. Use ensureTokenAccountsExist() first if needed.
+ */
+export async function createNonNativeTransferTransaction(
+  params: NonNativeTransferParams,
+  connection: Connection
+): Promise<NonNativeTransferTransactionResult> {
+  const {
+    mintAddress,
+    fromPublicKey,
+    toPublicKey,
+    amount,
+    decimals,
+    feePayerPublicKey = fromPublicKey,
+  } = params;
+
+  // Validate inputs
+  validateTokenAmounts(amount);
+  if (decimals < 0 || decimals > 9) {
+    throw new Error("Decimals must be between 0 and 9");
+  }
+
+  // Convert human amount to smallest units
+  const amountStr = amount.toString();
+  const amountSmallest = parseHumanAmountToBigInt(amountStr, decimals);
+  
+  if (amountSmallest <= BigInt(0)) {
+    throw new Error("Amount must be greater than 0");
+  }
+
+  console.log("🔄 Non-native transfer parameters:", {
+    mintAddress: mintAddress.toString(),
+    fromPublicKey: fromPublicKey.toString(),
+    toPublicKey: toPublicKey.toString(),
+    amount,
+    decimals,
+    amountSmallest: amountSmallest.toString(),
+  });
+
+  // Derive token accounts (assumes they exist)
+  const fromTokenAccount = getAssociatedTokenAddressSync(
+    mintAddress,
+    fromPublicKey,
+    false,
+    SPL_TOKEN_PROGRAM_ID,
+    ATA_PROGRAM_ID
+  );
+
+  const toTokenAccount = getAssociatedTokenAddressSync(
+    mintAddress,
+    toPublicKey,
+    false,
+    SPL_TOKEN_PROGRAM_ID,
+    ATA_PROGRAM_ID
+  );
+
+  // Check sender balance (optional validation)
+  try {
+    const senderBalance = await connection.getTokenAccountBalance(fromTokenAccount);
+    if (BigInt(senderBalance.value.amount) < amountSmallest) {
+      throw new Error(
+        `Insufficient token balance: have ${senderBalance.value.amount}, need ${amountSmallest.toString()}`
+      );
+    }
+  } catch (error) {
+    // If account doesn't exist, this will be caught during transaction execution
+    console.warn("⚠️ Could not check sender balance - account may not exist");
+  }
+
+  console.log("📍 Token accounts:", {
+    fromTokenAccount: fromTokenAccount.toString(),
+    toTokenAccount: toTokenAccount.toString(),
+  });
+
+  // Create transaction
+  const transaction = new Transaction();
+
+  // Create custom transfer instruction for Gorbchain
+  const amountBuffer = Buffer.alloc(8);
+  amountBuffer.writeBigUInt64LE(amountSmallest, 0);
+  
+  const transferIx = new TransactionInstruction({
+    keys: [
+      { pubkey: fromTokenAccount, isSigner: false, isWritable: true }, // source
+      { pubkey: toTokenAccount, isSigner: false, isWritable: true }, // destination
+      { pubkey: fromPublicKey, isSigner: true, isWritable: false }, // owner/authority
+    ],
+    programId: SPL_TOKEN_PROGRAM_ID, // Use Gorbchain token program
+    data: Buffer.concat([
+      Buffer.from([3]), // Transfer instruction discriminator (3 for SPL Token transfer)
+      amountBuffer, // amount as 8-byte little-endian
+    ]),
+  });
+
+  transaction.add(transferIx);
+  transaction.feePayer = feePayerPublicKey;
+
+  console.log("✅ Non-native transfer transaction created");
+
+  return {
+    transaction,
+    mintAddress,
+    fromPublicKey,
+    toPublicKey,
+    amountInSmallestUnits: amountSmallest,
+    fromTokenAccount,
+    toTokenAccount,
+    feePayerPublicKey,
+    instructions: [transferIx],
+  };
 }
 
 /**

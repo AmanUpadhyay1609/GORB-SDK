@@ -259,6 +259,54 @@ export interface AddLiquidityResult {
   error?: string;
 }
 
+// Non-native token transfer parameters
+export interface NonNativeTransferParams {
+  mintAddress: PublicKey;
+  fromPublicKey: PublicKey;
+  toPublicKey: PublicKey;
+  amount: number;
+  decimals: number;
+  feePayerPublicKey?: PublicKey; // Optional, defaults to fromPublicKey
+}
+
+// Non-native token transfer transaction result
+export interface NonNativeTransferTransactionResult {
+  transaction: Transaction;
+  mintAddress: PublicKey;
+  fromPublicKey: PublicKey;
+  toPublicKey: PublicKey;
+  amountInSmallestUnits: bigint;
+  fromTokenAccount: PublicKey;
+  toTokenAccount: PublicKey;
+  feePayerPublicKey: PublicKey;
+  instructions: any[];
+}
+
+// Non-native token transfer result
+export interface NonNativeTransferResult {
+  success: boolean;
+  signature?: TransactionSignature;
+  explorerUrl?: string;
+  error?: string;
+}
+
+// Token account existence check parameters
+export interface EnsureTokenAccountsParams {
+  mintAddress: PublicKey;
+  fromPublicKey: PublicKey;
+  toPublicKey: PublicKey;
+}
+
+// Token account existence check result
+export interface EnsureTokenAccountsResult {
+  fromTokenAccount: PublicKey;
+  toTokenAccount: PublicKey;
+  fromAccountExists: boolean;
+  toAccountExists: boolean;
+  createdAccounts: PublicKey[];
+  transaction?: Transaction; // Only present if accounts were created
+}
+
 // Signing function types
 export type SignWithKeypair = (transaction: Transaction, keypair: Keypair, connection: Connection) => Promise<Transaction>;
 export type SignWithWalletAdapter = (transaction: Transaction, wallet: any, connection: Connection) => Promise<Transaction>;

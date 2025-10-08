@@ -20,6 +20,7 @@ coverage
 **/*.map
 
 # Exclude built examples and tests from dist
+dist
 /dist/src/examples
 /dist/src/tests
 
@@ -37,3 +38,5 @@ SWAP_GUIDE.md
 MIGRATION_GUIDE.md
 STRUCTURE.md
 IMPROVEMENTS.md
+NATIVE_TRANSFER_GUIDE.md
+docs/

@@ -23,6 +23,11 @@ export type {
   AddLiquidityParams,
   AddLiquidityTransactionResult,
   AddLiquidityResult,
+  NonNativeTransferParams,
+  NonNativeTransferTransactionResult,
+  NonNativeTransferResult,
+  EnsureTokenAccountsParams,
+  EnsureTokenAccountsResult,
   DetailedTokenInfo,
   DetailedPoolInfo,
   Pool,
@@ -59,6 +64,8 @@ export {
   createSwapTransaction,
   createPoolTransaction,
   createAddLiquidityTransaction,
+  createNonNativeTransferTransaction,
+  ensureTokenAccountsExist,
 } from "../builders";
 
 // Signing utility exports

@@ -17,6 +17,10 @@ import {
   CreatePoolTransactionResult,
   AddLiquidityParams,
   AddLiquidityTransactionResult,
+  NonNativeTransferParams,
+  NonNativeTransferTransactionResult,
+  EnsureTokenAccountsParams,
+  EnsureTokenAccountsResult,
   Wallet,
   SDKConfig,
   SDKError,
@@ -33,6 +37,8 @@ import {
   createSwapTransaction,
   createPoolTransaction,
   createAddLiquidityTransaction,
+  createNonNativeTransferTransaction,
+  ensureTokenAccountsExist,
 } from "../builders";
 import {
   signWithKeypair,
@@ -254,6 +260,31 @@ export class SolanaSDK {
    */
   async getTransactionDetails(signature: string): Promise<any> {
     return getTransactionDetails(this.connection, signature);
+  }
+
+  /**
+   * Creates a non-native token transfer transaction
+   * @param params - Non-native transfer parameters
+   * @returns Non-native transfer transaction result
+   * Note: This assumes token accounts exist. Use ensureTokenAccountsExist() first if needed.
+   */
+  async createNonNativeTransferTransaction(
+    params: NonNativeTransferParams
+  ): Promise<NonNativeTransferTransactionResult> {
+    return createNonNativeTransferTransaction(params, this.connection);
+  }
+
+  /**
+   * Check if token accounts exist and optionally create them
+   * @param params - Token account parameters
+   * @param signer - Optional keypair or wallet for ATA creation
+   * @returns Token account existence result
+   */
+  async ensureTokenAccountsExist(
+    params: EnsureTokenAccountsParams,
+    signer?: Keypair | any
+  ): Promise<EnsureTokenAccountsResult> {
+    return ensureTokenAccountsExist(params, this.connection, signer);
   }
 
 
