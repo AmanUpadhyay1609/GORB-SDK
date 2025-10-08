@@ -20,7 +20,6 @@ coverage
 **/*.map
 
 # Exclude built examples and tests from dist
-dist
 /dist/src/examples
 /dist/src/tests
 
