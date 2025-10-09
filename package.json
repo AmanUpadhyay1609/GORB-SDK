@@ -30,12 +30,14 @@
   "author": "GORB Chain Team",
   "license": "MIT",
   "dependencies": {
-    "bs58": "^6.0.0"
+    "bs58": "^6.0.0",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@solana/spl-token": "^0.3.9",
     "@solana/web3.js": "^1.87.6",
     "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   },
   "sideEffects": false,
@@ -44,8 +46,12 @@
     "@solana/web3.js": "^1.87.0"
   },
   "peerDependenciesMeta": {
-    "@solana/spl-token": { "optional": false },
-    "@solana/web3.js": { "optional": false }
+    "@solana/spl-token": {
+      "optional": false
+    },
+    "@solana/web3.js": {
+      "optional": false
+    }
   },
   "engines": {
     "node": ">=16"
@@ -55,6 +61,7 @@
     "dist/src/builders/**",
     "dist/src/constants/**",
     "dist/src/core/**",
+    "dist/src/module2/**",
     "dist/src/signing/**",
     "dist/src/submission/**",
     "dist/src/types/**",

@@ -33,7 +33,7 @@ export async function createNFTOnGorbchain() {
     console.log("✅ NFT transaction signed");
 
     // Step 3: Submit transaction
-    const submitResult = await sdk.submitTransaction(signedTx);
+  const submitResult = await sdk.submitTransaction(signedTx);
     if (submitResult.success) {
       console.log("🎉 NFT created successfully:", submitResult.signature);
     } else {

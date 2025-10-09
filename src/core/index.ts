@@ -114,3 +114,6 @@ export {
   createAssociatedTokenAccountInstruction,
   createMintToInstruction,
 } from "@solana/spl-token";
+
+// Module2 exports - Advanced SDK Features
+export * as Module2 from "../module2";
